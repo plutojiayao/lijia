@@ -1,0 +1,3378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>危楼谜影 · 首款安全剧本杀 · 联机版</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+  :root{
+    --bg:#0c0e12; --panel:#151920; --panel-2:#1b212a; --line:#2a313b;
+    --text:#e8eaed; --muted:#8b95a3; --accent:#ff8a00; --accent-2:#ffc247;
+    --danger:#e5484d; --ok:#3fb950; --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.7;
+    -webkit-font-smoothing:antialiased; min-height:100%;
+  }
+  body::before{
+    content:""; position:fixed; inset:0;
+    background:
+      radial-gradient(900px 500px at 12% -10%, rgba(255,138,0,.10), transparent 60%),
+      radial-gradient(700px 500px at 95% 0%, rgba(229,72,77,.08), transparent 60%);
+    pointer-events:none; z-index:0;
+  }
+  .app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:22px 18px 80px;}
+
+  .topbar{
+    display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:22px;
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+  .brand-mark{
+    width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:24px;
+    background:linear-gradient(145deg,#ff8a00,#e5484d);
+    box-shadow:0 6px 22px rgba(255,138,0,.30);
+  }
+  .brand h1{font-size:19px;letter-spacing:1.5px;font-weight:800;}
+  .brand p{font-size:11.5px;color:var(--muted);letter-spacing:1px;margin-top:-2px;}
+
+  .roomtag{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:7px 14px;font-size:13px;
+  }
+  .roomtag b{color:var(--accent-2);letter-spacing:3px;font-size:16px;font-weight:900;}
+
+  .btn{
+    font-family:inherit;font-size:14px;font-weight:700;letter-spacing:1px;
+    background:linear-gradient(145deg,#ff8a00,#ff6a00);color:#171a1f;
+    border:none;border-radius:10px;padding:11px 24px;cursor:pointer;transition:.18s;
+  }
+  .btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text);}
+  .btn.ghost:hover{border-color:var(--accent);color:var(--accent);}
+  .btn.danger{background:linear-gradient(145deg,#e5484d,#c1272d);color:#fff;}
+  .btn.small{padding:6px 14px;font-size:12.5px;border-radius:8px;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+  .tab{
+    background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    padding:9px 16px;border-radius:10px;cursor:pointer;font-size:13.5px;
+    font-family:inherit;transition:.18s;font-weight:600;
+  }
+  .tab:hover{color:var(--text);border-color:#3a434f;}
+  .tab.active{background:linear-gradient(145deg,#ff8a00,#ff6a00);color:#171a1f;border-color:transparent;}
+  .panel{display:none;animation:fade .28s ease;}
+  .panel.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .section-head{margin-bottom:18px;}
+  .section-head h2{font-size:19px;letter-spacing:2px;margin-bottom:4px;}
+  .section-head p{color:var(--muted);font-size:13.5px;}
+
+  #screen-home{text-align:center;padding:40px 0 20px;}
+  #screen-home .hero-title{
+    font-size:clamp(28px,6vw,52px);font-weight:900;letter-spacing:10px;
+    background:linear-gradient(120deg,#ffc247,#ff8a00 45%,#e5484d);
+    -webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:6px;
+  }
+  #screen-home .hero-sub{color:var(--muted);letter-spacing:4px;font-size:13px;margin-bottom:34px;}
+  .entry-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:18px;max-width:820px;margin:0 auto;text-align:left;
+  }
+  .entry-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:26px 24px;transition:.2s;
+  }
+  .entry-card.highlight{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(255,138,0,.12), 0 8px 30px rgba(255,138,0,.15);
+    animation:pulse 1.8s ease-in-out 3;
+  }
+  @keyframes pulse{
+    0%,100%{box-shadow:0 0 0 3px rgba(255,138,0,.12), 0 8px 30px rgba(255,138,0,.15);}
+    50%{box-shadow:0 0 0 6px rgba(255,138,0,.06), 0 10px 38px rgba(255,138,0,.25);}
+  }
+  .entry-card h3{font-size:17px;letter-spacing:2px;margin-bottom:10px;color:var(--accent-2);}
+  .entry-card p{font-size:13.5px;color:#b7bec8;line-height:1.75;margin-bottom:16px;}
+
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;letter-spacing:2px;color:var(--accent);font-weight:800;margin-bottom:7px;}
+  .field input{
+    width:100%;font-family:inherit;font-size:15px;color:var(--text);
+    background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    padding:12px 15px;outline:none;transition:.18s;letter-spacing:1px;
+  }
+  .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,138,0,.12);}
+  .field input.code{text-transform:uppercase;letter-spacing:6px;font-weight:900;text-align:center;font-size:20px;}
+
+  .intro-box{
+    max-width:820px;margin:0 auto 26px;text-align:left;
+    background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:var(--radius);padding:20px 24px;
+  }
+  .intro-box p{font-size:14px;color:#c7ccd4;margin-bottom:10px;}
+  .tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .tag{
+    font-size:12px;padding:4px 12px;border-radius:999px;
+    background:rgba(255,138,0,.12);color:var(--accent-2);border:1px solid rgba(255,138,0,.3);
+  }
+
+  .pwd-overlay{
+    position:fixed;inset:0;background:rgba(5,7,10,.9);backdrop-filter:blur(6px);
+    display:none;align-items:center;justify-content:center;padding:20px;z-index:200;
+  }
+  .pwd-overlay.show{display:flex;animation:fade .22s;}
+  .pwd-box{
+    background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    padding:28px 30px;max-width:400px;width:100%;text-align:center;
+    animation:pop .25s ease;
+  }
+  @keyframes pop{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:none;}}
+  .pwd-box .lock-ico{font-size:36px;margin-bottom:12px;display:block;}
+  .pwd-box h3{font-size:18px;letter-spacing:2px;margin-bottom:8px;color:var(--accent-2);}
+  .pwd-box p{font-size:13px;color:var(--muted);margin-bottom:18px;}
+  .pwd-box input{
+    width:100%;text-align:center;letter-spacing:6px;
+    font-size:18px;font-family:inherit;color:var(--text);
+    background:var(--panel-2);border:1px solid var(--line);
+    border-radius:10px;padding:12px 15px;outline:none;transition:.18s;
+    margin-bottom:16px;font-weight:700;
+  }
+  .pwd-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,138,0,.12);}
+  .pwd-box .btn-row{display:flex;gap:10px;margin-top:0;}
+  .pwd-box .btn{flex:1;}
+  .pwd-error{color:#ff8a8d;font-size:12.5px;margin-top:12px;min-height:18px;}
+
+  .statusbar{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    margin-bottom:18px;padding-bottom:14px;border-bottom:1px dashed var(--line);
+  }
+  .pill{
+    font-size:11.5px;padding:3px 11px;border-radius:999px;
+    background:rgba(255,138,0,.12);color:var(--accent-2);border:1px solid rgba(255,138,0,.3);
+    font-weight:700;letter-spacing:.5px;
+  }
+  .pill.ok{background:rgba(63,185,80,.15);color:#7ee787;border-color:rgba(63,185,80,.4);}
+  .pill.red{background:rgba(229,72,77,.15);color:#ff8a8d;border-color:rgba(229,72,77,.4);}
+  .hint{font-size:12.5px;color:var(--muted);}
+
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px 22px;margin-bottom:16px;
+  }
+  .card h3{font-size:15px;margin-bottom:8px;color:var(--accent-2);}
+  .card p{color:#c7ccd4;font-size:14.5px;margin-bottom:8px;}
+  .divider{height:1px;background:var(--line);margin:14px 0;}
+
+  .tile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+  .tile{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:17px 18px;cursor:pointer;transition:.2s;position:relative;overflow:hidden;
+    text-align:left;font-family:inherit;color:var(--text);
+  }
+  .tile::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--tc,#ff8a00);}
+  .tile:hover{border-color:var(--tc,#ff8a00);transform:translateY(-2px);}
+  .tile .tno{font-size:11px;letter-spacing:2px;font-weight:800;color:var(--tc,#ff8a00);margin-bottom:5px;}
+  .tile h3{font-size:15.5px;letter-spacing:1px;margin-bottom:4px;line-height:1.5;}
+  .tile .tm{font-size:12px;color:var(--muted);line-height:1.6;}
+  .tile .ticon{font-size:22px;margin-bottom:8px;display:block;}
+  .tile .tdesc{
+    font-size:12.5px;color:#9aa3af;margin-top:9px;line-height:1.65;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .tile .tfoot{margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .tile .badge{
+    font-size:10.5px;padding:2px 9px;border-radius:999px;font-weight:700;
+    background:rgba(255,138,0,.14);color:var(--accent);border:1px solid rgba(255,138,0,.3);white-space:nowrap;
+  }
+  .tile .badge.green{background:rgba(63,185,80,.14);color:#7ee787;border-color:rgba(63,185,80,.35);}
+  .tile .badge.blue{background:rgba(122,162,247,.14);color:#9db8ff;border-color:rgba(122,162,247,.35);}
+  .tile .go{font-size:11.5px;color:var(--muted);white-space:nowrap;}
+  .tile.locked{opacity:.42;cursor:pointer;}
+  .tile.locked:hover{border-color:#8b95a3;}
+
+  .cast-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:14px;}
+  .cast-card{perspective:1000px;height:190px;cursor:pointer;}
+  .cast-inner{
+    position:relative;width:100%;height:100%;transform-style:preserve-3d;
+    transition:transform .65s cubic-bezier(.4,.2,.2,1);
+  }
+  .cast-card.flipped .cast-inner{transform:rotateY(180deg);}
+  .cast-face{
+    position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--radius);
+    border:1px solid var(--line);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;padding:14px;text-align:center;
+  }
+  .cast-front{
+    background:
+      repeating-linear-gradient(45deg,rgba(255,138,0,.045) 0 12px,transparent 12px 24px),
+      var(--panel);
+    border-style:dashed;
+  }
+  .cast-front .num{font-size:26px;font-weight:900;color:#3a434f;letter-spacing:2px;}
+  .cast-front .lbl{font-size:12.5px;color:var(--muted);margin-top:6px;letter-spacing:2px;}
+  .cast-back{
+    transform:rotateY(180deg);
+    background:linear-gradient(160deg,var(--panel-2),#12161c);
+    border-color:rgba(255,138,0,.42);
+    justify-content:space-between;align-items:stretch;text-align:left;padding:14px;
+  }
+  .cast-back .rname{font-size:17px;font-weight:800;letter-spacing:2px;color:var(--accent-2);}
+  .cast-back .rmeta{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.5;}
+  .cast-back .rview{
+    font-size:12px;padding:7px 0;border-radius:8px;text-align:center;
+    background:rgba(255,138,0,.14);color:var(--accent);border:1px solid rgba(255,138,0,.3);
+    margin-top:8px;font-weight:700;
+  }
+
+  .role-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:13px;}
+  .role-tile{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 17px;cursor:pointer;transition:.2s;position:relative;overflow:hidden;
+    text-align:left;font-family:inherit;color:var(--text);
+  }
+  .role-tile::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--rc,#ff8a00);}
+  .role-tile:hover{border-color:var(--rc,#ff8a00);transform:translateY(-2px);}
+  .role-tile h3{font-size:16px;letter-spacing:2px;margin-bottom:3px;}
+  .role-tile .m{font-size:11.5px;color:var(--muted);}
+  .role-tile .b{font-size:12.5px;color:#9aa3af;margin-top:9px;line-height:1.6;}
+
+  .modal-mask{
+    position:fixed;inset:0;background:rgba(5,7,10,.86);backdrop-filter:blur(6px);
+    display:none;align-items:center;justify-content:center;padding:20px;z-index:99;
+  }
+  .modal-mask.show{display:flex;}
+  .modal{
+    background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    max-width:720px;width:100%;max-height:88vh;overflow-y:auto;padding:28px 30px;
+    position:relative;animation:pop .25s ease;
+  }
+  .modal .close{
+    position:absolute;top:16px;right:18px;background:none;border:none;color:var(--muted);
+    font-size:24px;cursor:pointer;line-height:1;font-family:inherit;
+  }
+  .modal .close:hover{color:var(--accent);}
+  .modal h2{font-size:22px;letter-spacing:3px;color:var(--accent-2);margin-bottom:2px;}
+  .modal .sub{color:var(--muted);font-size:12.5px;letter-spacing:1px;margin-bottom:18px;}
+  .block{margin-bottom:16px;}
+  .block .bt{font-size:12px;letter-spacing:2px;color:var(--accent);font-weight:800;margin-bottom:7px;}
+  .block ul{padding-left:20px;}
+  .block li{font-size:14px;color:#c7ccd4;margin-bottom:6px;}
+
+  .scene{
+    background:rgba(255,138,0,.055);border-left:3px solid var(--accent);
+    padding:12px 16px;border-radius:0 10px 10px 0;margin:0 0 16px;
+    font-size:14px;color:#cfd4db;
+  }
+  .script{
+    background:#101419;border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;font-size:14.5px;color:#d7dbe2;white-space:pre-wrap;
+    line-height:1.9;margin-bottom:16px;
+  }
+  .script .em{color:var(--accent-2);font-weight:700;}
+  .script .cue{color:var(--muted);font-style:italic;}
+
+  .tips{list-style:none;padding:0;}
+  .tips li{
+    font-size:13.5px;color:#c0c6ce;padding:9px 12px 9px 34px;position:relative;
+    background:var(--panel-2);border-radius:9px;margin-bottom:7px;
+  }
+  .tips li::before{content:"◆";position:absolute;left:13px;color:var(--accent);font-size:11px;top:10px;}
+
+  .evi-desc{
+    font-size:14px;color:#c7ccd4;white-space:pre-wrap;line-height:1.9;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-bottom:16px;
+  }
+
+  .reveal-wrap{margin-top:4px;}
+  .reveal-btn{
+    width:100%;font-family:inherit;font-size:13.5px;font-weight:800;letter-spacing:2px;
+    background:rgba(229,72,77,.10);color:#ff8a8d;border:1px dashed rgba(229,72,77,.45);
+    border-radius:11px;padding:13px 16px;cursor:pointer;transition:.2s;
+    display:flex;align-items:center;justify-content:center;gap:9px;
+  }
+  .reveal-btn:hover{background:rgba(229,72,77,.18);border-style:solid;}
+  .reveal-btn .arr{transition:transform .25s;font-size:11px;}
+  .reveal-wrap.open .reveal-btn .arr{transform:rotate(90deg);}
+  .reveal-body{display:none;margin-top:11px;animation:fade .25s;}
+  .reveal-wrap.open .reveal-body{display:block;}
+  .reveal-btn.warm{background:rgba(255,138,0,.10);color:var(--accent);border-color:rgba(255,138,0,.45);}
+  .reveal-btn.warm:hover{background:rgba(255,138,0,.18);}
+
+  .secret-box{
+    background:rgba(229,72,77,.07);border:1px solid rgba(229,72,77,.28);
+    border-radius:11px;padding:15px 17px;
+  }
+  .secret-box .sh{font-size:11.5px;letter-spacing:2px;color:#ff7b7f;font-weight:800;margin-bottom:9px;}
+  .secret-box ul{padding-left:18px;}
+  .secret-box li{font-size:13.5px;color:#d3b9ba;margin-bottom:7px;line-height:1.75;}
+
+  .role-block{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:12px;
+    padding:14px 17px;margin-bottom:12px;
+  }
+  .role-block .rbt{font-size:12px;letter-spacing:2px;color:var(--accent-2);font-weight:800;margin-bottom:8px;}
+  .role-block ul{padding-left:18px;}
+  .role-block li{font-size:13.5px;color:#c7ccd4;margin-bottom:7px;line-height:1.75;}
+  .role-block p{font-size:13.5px;color:#c7ccd4;line-height:1.8;}
+
+  .player-row{
+    display:flex;align-items:center;gap:12px;padding:12px 15px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:11px;margin-bottom:8px;
+    flex-wrap:wrap;
+  }
+  .player-row .avatar{
+    width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
+    background:rgba(255,138,0,.12);color:var(--accent);font-weight:900;font-size:14px;
+    border:1px solid rgba(255,138,0,.28);flex:0 0 36px;
+  }
+  .player-row .info{flex:1;min-width:120px;}
+  .player-row .info b{font-size:14.5px;letter-spacing:1px;display:block;}
+  .player-row .info span{font-size:12px;color:var(--muted);}
+  .player-row .actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .offline{opacity:.45;}
+
+  .vote-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+  .vote-item{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:12px;
+    padding:15px 17px;cursor:pointer;transition:.2s;font-family:inherit;color:var(--text);text-align:left;
+  }
+  .vote-item:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .vote-item.sel{border-color:var(--accent);background:rgba(255,138,0,.10);}
+  .vote-item.disabled{opacity:.45;cursor:not-allowed;transform:none;}
+  .vote-item h4{font-size:15.5px;letter-spacing:2px;margin-bottom:3px;}
+  .vote-item .m{font-size:11.5px;color:var(--muted);}
+
+  .result-row{
+    display:flex;align-items:center;gap:12px;padding:11px 14px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:11px;margin-bottom:8px;
+  }
+  .result-row .nm{font-size:14px;font-weight:700;letter-spacing:1px;min-width:80px;}
+  .result-bar{flex:1;height:12px;background:#101419;border-radius:999px;overflow:hidden;border:1px solid var(--line);}
+  .result-bar i{display:block;height:100%;background:linear-gradient(90deg,#ff8a00,#e5484d);border-radius:999px;transition:width .4s;}
+  .result-row .cnt{font-size:14px;font-weight:900;color:var(--accent-2);min-width:34px;text-align:right;}
+
+  .vote-card-mini{
+    display:flex;align-items:center;gap:12px;padding:11px 14px;margin-bottom:8px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:11px;
+  }
+  .vote-card-mini .nm{font-size:14px;font-weight:700;min-width:80px;}
+  .vote-card-mini .tagv{font-size:12.5px;color:var(--accent-2);}
+
+  .ending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+
+  .truth-box{
+    background:linear-gradient(160deg,rgba(229,72,77,.09),rgba(255,138,0,.05));
+    border:1px solid rgba(229,72,77,.34);border-radius:var(--radius);
+    padding:20px 22px;margin-bottom:14px;
+  }
+  .truth-box h3{color:#ff8a8d;letter-spacing:2px;margin-bottom:12px;font-size:15px;}
+  .truth-box p{font-size:14px;color:#ccd1d8;margin-bottom:9px;line-height:1.85;}
+  .truth-box strong{color:var(--accent-2);}
+
+  .lock-box{
+    background:linear-gradient(160deg,rgba(139,149,163,.12),rgba(139,149,163,.03));
+    border:1px solid rgba(139,149,163,.38);border-radius:var(--radius);
+    padding:20px 22px;margin-bottom:14px;
+  }
+  .lock-box h3{color:#b8c0cc;letter-spacing:2px;margin-bottom:12px;font-size:15px;}
+  .lock-box p{font-size:14px;color:#ccd1d8;margin-bottom:9px;line-height:1.85;}
+  .lock-box strong{color:var(--accent-2);}
+  .lock-path{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:11px;
+    padding:12px 15px;margin-top:6px;
+  }
+  .lock-step{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px;}
+  .lock-step.now{color:#ffc247;font-weight:700;}
+  .lock-step .dot{width:8px;height:8px;border-radius:50%;background:#3a434f;display:inline-block;}
+  .lock-step.now .dot{background:#ffc247;box-shadow:0 0 8px rgba(255,194,71,.6);}
+  .lock-step.locked .dot{background:#2a313b;}
+
+  .quote{
+    text-align:center;padding:26px 20px;margin-top:16px;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  }
+  .quote p{
+    font-size:clamp(14px,2.2vw,18px);letter-spacing:2px;font-weight:700;
+    background:linear-gradient(120deg,#ffc247,#ff8a00,#e5484d);
+    -webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.8;
+  }
+  .quote span{display:block;font-size:12.5px;color:var(--muted);margin-top:12px;letter-spacing:3px;}
+
+  .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:14px 0;}
+  .stat{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:15px;text-align:center;}
+  .stat b{display:block;font-size:24px;color:var(--accent);font-weight:900;letter-spacing:1px;}
+  .stat span{font-size:12px;color:var(--muted);}
+
+  .empty-tip{
+    text-align:center;padding:34px 20px;color:var(--muted);font-size:13.5px;
+    background:var(--panel-2);border:1px dashed var(--line);border-radius:var(--radius);
+  }
+
+  /* 二维码弹窗 */
+  .qr-warn{
+    background:rgba(229,72,77,.08);
+    border:1px solid rgba(229,72,77,.35);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-bottom:14px;
+    font-size:13px;
+    color:#ff9a9d;
+    line-height:1.7;
+  }
+  .qr-warn b{color:#ffc247;}
+  .deploy-input{
+    width:100%;
+    font-family:inherit;
+    font-size:14px;
+    color:var(--text);
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:11px 14px;
+    outline:none;
+    transition:.18s;
+    letter-spacing:.5px;
+  }
+  .deploy-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,138,0,.12);}
+  .qr-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:18px;
+  }
+  .qr-block{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px 18px;
+    text-align:center;
+    transition:.2s;
+  }
+  .qr-block:hover{border-color:var(--accent);}
+  .qr-block .qr-title{
+    font-size:13.5px;
+    letter-spacing:2px;
+    color:var(--accent-2);
+    font-weight:800;
+    margin-bottom:14px;
+  }
+  .qr-block .qr-holder{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+    padding:14px;
+    border-radius:12px;
+    line-height:0;
+    box-shadow:0 4px 18px rgba(0,0,0,.25);
+    min-width:248px;
+    min-height:248px;
+  }
+  .qr-block .qr-holder canvas{
+    display:block;
+    width:220px;
+    height:220px;
+  }
+  .qr-block .qr-desc{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:14px;
+    line-height:1.65;
+  }
+  .qr-block .qr-desc b{
+    color:var(--accent);
+    letter-spacing:3px;
+    font-weight:900;
+  }
+  .qr-fallback{
+    font-size:12px;
+    color:#ff8a8d;
+    text-align:center;
+    padding:14px 10px;
+    line-height:1.7;
+    background:rgba(229,72,77,.08);
+    border:1px dashed rgba(229,72,77,.4);
+    border-radius:8px;
+  }
+  .qr-fallback b{
+    display:block;
+    color:var(--accent-2);
+    font-size:14px;
+    letter-spacing:3px;
+    margin:8px 0;
+  }
+  .qr-tips{
+    background:rgba(255,138,0,.06);
+    border:1px solid rgba(255,138,0,.25);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-top:18px;
+    font-size:13px;
+    color:#ffc247;
+    line-height:1.7;
+  }
+
+  .hidden{display:none !important;}
+
+  @media(max-width:640px){
+    .app{padding:16px 12px 60px;}
+    .brand h1{font-size:15px;letter-spacing:.5px;}
+    .tab{padding:8px 12px;font-size:12.5px;}
+    .cast-card{height:170px;}
+    .modal{padding:22px 18px;}
+    .tile-grid{grid-template-columns:1fr 1fr;}
+    .tile{padding:14px 13px;}
+    .tile h3{font-size:14px;}
+    .tile .tdesc{display:none;}
+    .roomtag{padding:6px 10px;font-size:12px;}
+    .roomtag b{font-size:14px;letter-spacing:2px;}
+    .qr-block .qr-holder canvas{width:180px;height:180px;}
+    .qr-block .qr-holder{min-width:208px;min-height:208px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 首页 -->
+  <section id="screen-home">
+    <div class="topbar" style="border:none;padding-bottom:0;margin-bottom:0;justify-content:center;">
+      <div class="brand" style="flex-direction:column;text-align:center;gap:8px;">
+        <div class="brand-mark">🏗</div>
+        <div>
+          <h1 style="font-size:22px;letter-spacing:3px;">危楼谜影 · 首款安全剧本杀</h1>
+          <p style="font-size:12px;">建筑施工安全主题 · 多人联机版</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:26px"></div>
+
+    <div class="intro-box">
+      <p><strong style="color:#ffc247">剧本简介</strong></p>
+      <p>北京，中央商务区核心地带，"京华之巅"超高层建筑项目施工现场。2023年9月15日晚8点47分，项目安全总监李国栋从尚未完工的43层坠落身亡。警方初步认定为意外，但一封匿名举报信指出这起"意外"背后隐藏着复杂的利益关系和人为阴谋。</p>
+      <p>三个月后，项目即将复工，所有关键人员被召集到项目部会议室进行最后一次安全整改会议。就在会议开始前，项目经理张建国突然宣布，他收到了新的证据，证明李国栋之死并非意外——而凶手就在今天与会者之中……</p>
+      <div class="tag-row">
+        <span class="tag">10人本</span>
+        <span class="tag">3-4小时</span>
+        <span class="tag">硬核推理</span>
+        <span class="tag">安全生产教育</span>
+        <span class="tag">道德困境</span>
+      </div>
+    </div>
+
+    <div class="entry-grid">
+      <div class="entry-card">
+        <h3>🎙 我是主持人</h3>
+        <p>创建房间需要输入主持人密码。主持人可以查看所有角色、所有证据、所有隐藏内容，并控制证据解锁、手动分配证据、发起凶手投票、实时统计票数。</p>
+        <button class="btn" id="btnCreateRoom" style="width:100%">创建房间</button>
+        <button class="btn ghost" id="btnReturnRoom" style="width:100%;margin-top:10px">返回上次创建的房间</button>
+        <p id="lastRoomHint" style="font-size:11.5px;color:var(--muted);margin-top:10px;text-align:center;display:none"></p>
+      </div>
+      <div class="entry-card" id="joinCard">
+        <h3>🎭 我是玩家</h3>
+        <p>输入主持人提供的 6 位房间码加入游戏。加入后只能看到自己的角色剧本、自己的证据，以及其他人主动公开的证据。</p>
+        <div class="field" style="margin-top:12px">
+          <label>房间码</label>
+          <input type="text" id="inpRoomCode" class="code" maxlength="6" placeholder="ABC123">
+        </div>
+        <div class="field">
+          <label>你的名字</label>
+          <input type="text" id="inpPlayerName" maxlength="12" placeholder="请输入你的名字">
+        </div>
+        <button class="btn" id="btnJoinRoom" style="width:100%">加入房间</button>
+      </div>
+    </div>
+
+    <p style="text-align:center;color:var(--muted);font-size:12.5px;margin-top:24px;">
+      ⓘ 本游戏需要联网。主持人创建房间后，请把房间码发给其他玩家。
+    </p>
+  </section>
+
+  <!-- 密码遮罩 -->
+  <div class="pwd-overlay" id="pwdOverlay">
+    <div class="pwd-box">
+      <span class="lock-ico">🔒</span>
+      <h3>主持人验证</h3>
+      <p>请输入主持人密码以创建房间</p>
+      <input type="password" id="inpHostPwd" placeholder="请输入密码" autocomplete="off">
+      <div class="btn-row">
+        <button class="btn" id="btnPwdConfirm">确认</button>
+        <button class="btn ghost" id="btnPwdCancel">取消</button>
+      </div>
+      <p class="pwd-error" id="pwdError"></p>
+    </div>
+  </div>
+
+  <!-- 主持人界面 -->
+  <section id="screen-host" class="hidden">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">🎙</div>
+        <div>
+          <h1>主持人控制台</h1>
+          <p>危楼谜影 · 首款安全剧本杀</p>
+        </div>
+      </div>
+      <div class="roomtag">
+        房间码 <b id="hostRoomCode">------</b>
+        <button class="btn ghost small" id="btnCopyCode">复制</button>
+        <button class="btn small" id="btnShowQR">📱 二维码</button>
+      </div>
+    </header>
+
+    <div class="statusbar">
+      <span class="pill" id="hostPlayerPill">玩家 0 / 10</span>
+      <span class="pill" id="hostVotePill">投票未开始</span>
+      <span class="hint">玩家加入后可在「房间与投票」中查看并分配角色</span>
+      <button class="btn ghost small" id="btnBackHomeHost">退出房间</button>
+    </div>
+
+    <nav class="tabs" id="hostTabs">
+      <button class="tab active" data-tab="h-flow">分幕流程</button>
+      <button class="tab" data-tab="h-clues">证据中心</button>
+      <button class="tab" data-tab="h-roles">角色剧本</button>
+      <button class="tab" data-tab="h-truth">终局与真相</button>
+      <button class="tab" data-tab="h-room">房间与投票</button>
+    </nav>
+
+    <div class="panel active" id="panel-h-flow">
+      <div class="section-head">
+        <h2>主持人流程</h2>
+        <p>点击任意一幕卡片，弹出该幕的完整剧本与主持提示。建议按顺序推进。</p>
+      </div>
+      <div class="tile-grid" id="hostActGrid"></div>
+    </div>
+
+    <div class="panel" id="panel-h-clues">
+      <div class="section-head">
+        <h2>证据中心</h2>
+        <p>点击证据卡片查看详情。<strong style="color:#ff8a8d">隐藏线索需要再次点击按钮才能显示</strong>。每张卡片可手动分配证据给指定角色。</p>
+      </div>
+      <div class="round-bar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;">
+        <span style="font-size:13.5px;font-weight:700;letter-spacing:1px;" id="hostRoundLabel">当前进度：第一轮搜证</span>
+        <span style="font-size:12.5px;color:var(--muted);margin-right:auto;" id="hostRoundHint">已解锁 10 条基础证据</span>
+        <button class="btn ghost small" id="btnNextRound">解锁下一轮证据 →</button>
+        <button class="btn ghost small" id="btnResetRound">重置</button>
+      </div>
+      <div class="tile-grid" id="hostClueGrid"></div>
+    </div>
+
+    <div class="panel" id="panel-h-roles">
+      <div class="section-head">
+        <h2>角色剧本库</h2>
+        <p>主持人可在此随时调阅任意角色的完整剧本。点击角色卡片查看背景与时间线，<strong style="color:#ff8a8d">秘密与目标需再次点击按钮显示</strong>。</p>
+      </div>
+      <div class="role-grid" id="hostRoleGrid"></div>
+    </div>
+
+    <div class="panel" id="panel-h-truth">
+      <div class="section-head">
+        <h2>终局与真相</h2>
+        <p>点击卡片查看三种结局、最终真相与安全警示教育。建议在玩家完成指认后再逐张揭示。</p>
+      </div>
+      <div class="ending-grid" id="hostEndingGrid"></div>
+    </div>
+
+    <div class="panel" id="panel-h-room">
+      <div class="section-head">
+        <h2>房间与投票</h2>
+        <p>查看已加入的玩家、分配角色、发起凶手投票，并实时统计票数。</p>
+      </div>
+
+      <div class="card">
+        <h3>邀请玩家</h3>
+        <p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">
+          点击下方按钮生成邀请二维码。玩家用微信扫码即可快速进入游戏。
+        </p>
+        <div class="btn-row" style="margin-top:0">
+          <button class="btn" id="btnShowQR2">📱 生成邀请二维码</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>玩家列表</h3>
+        <div id="hostPlayerList"></div>
+      </div>
+
+      <div class="card">
+        <h3>凶手投票</h3>
+        <p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">
+          点击「开始投票」后，所有玩家将可以投票。票数实时统计，主持人可随时查看结果。
+        </p>
+        <div class="btn-row" style="margin-top:0">
+          <button class="btn" id="btnStartVote">开始投票</button>
+          <button class="btn ghost" id="btnResetVote">重置投票</button>
+        </div>
+        <div class="divider"></div>
+        <div id="hostVoteResult"></div>
+      </div>
+
+      <div class="card">
+        <h3>已公开的证据</h3>
+        <div id="hostRevealedList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 玩家界面 -->
+  <section id="screen-player" class="hidden">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">🎭</div>
+        <div>
+          <h1 id="playerRoomTitle">危楼谜影</h1>
+          <p id="playerNameSub">玩家</p>
+        </div>
+      </div>
+      <div class="roomtag">
+        房间 <b id="playerRoomCode">------</b>
+        <button class="btn ghost small" id="btnBackHomePlayer">退出</button>
+      </div>
+    </header>
+
+    <div class="statusbar">
+      <span class="pill" id="playerRolePill">未分配角色</span>
+      <span class="pill" id="playerVotePill">投票未开始</span>
+      <span class="hint" id="playerConnHint">已连接</span>
+    </div>
+
+    <div id="playerDrawArea">
+      <div class="section-head">
+        <h2>抽取你的角色</h2>
+        <p>点击下方任意一张卡牌，系统将从剩余角色中随机分配一个给你。<strong style="color:#e5484d">每张卡牌只能被抽取一次。</strong></p>
+      </div>
+      <div class="cast-grid" id="playerCastGrid"></div>
+    </div>
+
+    <div id="playerContent" class="hidden">
+      <nav class="tabs" id="playerTabs">
+        <button class="tab active" data-tab="p-role">我的剧本</button>
+        <button class="tab" data-tab="p-evidence">我的证据</button>
+        <button class="tab" data-tab="p-public">公开证据</button>
+        <button class="tab" data-tab="p-vote">凶手投票</button>
+      </nav>
+
+      <div class="panel active" id="panel-p-role">
+        <div class="section-head">
+          <h2>我的角色剧本</h2>
+          <p>这里是你专属的角色信息。<strong style="color:#ff8a8d">请勿向其他玩家展示秘密部分。</strong></p>
+        </div>
+        <div id="playerRoleBox"></div>
+      </div>
+
+      <div class="panel" id="panel-p-evidence">
+        <div class="section-head">
+          <h2>我的证据</h2>
+          <p>以下证据由系统根据「持有/来源」自动分配给你，或由主持人手动分配。<strong style="color:#7ee787">公开时只公开证据内容，隐藏线索不会被公开。</strong></p>
+        </div>
+        <div class="tile-grid" id="playerEvidenceGrid"></div>
+      </div>
+
+      <div class="panel" id="panel-p-public">
+        <div class="section-head">
+          <h2>公开证据</h2>
+          <p>所有玩家主动公开的证据都会显示在这里。公开内容仅包含证据本身，不含持有者的隐藏线索。</p>
+        </div>
+        <div class="tile-grid" id="playerPublicGrid"></div>
+      </div>
+
+      <div class="panel" id="panel-p-vote">
+        <div class="section-head">
+          <h2>凶手投票</h2>
+          <p>主持人开启投票后，请从下方所有参与角色中选出你认为的凶手。</p>
+        </div>
+        <div id="playerVoteBox"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <button class="close" id="modalClose">×</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   QR 码生成器（内嵌版，M 级纠错，兼容微信扫码）
+   ========================================================= */
+var QRLite = (function(){
+  'use strict';
+
+  var EXP = new Uint8Array(256);
+  var LOG = new Uint8Array(256);
+  for(var i=0;i<8;i++) EXP[i] = 1 << i;
+  for(var i=8;i<256;i++) EXP[i] = EXP[i-4] ^ EXP[i-5] ^ EXP[i-6] ^ EXP[i-8];
+  for(var i=0;i<255;i++) LOG[EXP[i]] = i;
+
+  function gexp(n){
+    while(n < 0) n += 255;
+    while(n >= 255) n -= 255;
+    return EXP[n];
+  }
+  function glog(n){
+    if(n < 1) throw new Error('glog(' + n + ')');
+    return LOG[n];
+  }
+
+  function polyMul(a, b){
+    var r = new Array(a.length + b.length - 1).fill(0);
+    for(var i=0;i<a.length;i++){
+      if(a[i] === 0) continue;
+      for(var j=0;j<b.length;j++){
+        if(b[j] === 0) continue;
+        r[i+j] ^= gexp(glog(a[i]) + glog(b[j]));
+      }
+    }
+    return r;
+  }
+
+  function genPoly(ec){
+    var p = [1];
+    for(var i=0;i<ec;i++){
+      p = polyMul(p, [1, gexp(i)]);
+    }
+    return p;
+  }
+
+  function rsEncode(data, ec){
+    var gen = genPoly(ec);
+    var buf = data.concat(new Array(ec).fill(0));
+    for(var i=0;i<data.length;i++){
+      var coef = buf[i];
+      if(coef !== 0){
+        var lc = glog(coef);
+        for(var j=0;j<gen.length;j++){
+          if(gen[j] !== 0){
+            buf[i+j] ^= gexp(glog(gen[j]) + lc);
+          }
+        }
+      }
+    }
+    return buf.slice(data.length);
+  }
+
+  /* 纠错等级 M 的容量表 [总码字, 数据码字] */
+  var VERSION_CAPACITY_M = {
+    1:  [26,  16],
+    2:  [44,  28],
+    3:  [70,  44],
+    4:  [100, 64],
+    5:  [134, 86],
+    6:  [172, 108],
+    7:  [196, 124],
+    8:  [242, 154],
+    9:  [292, 182],
+    10: [346, 216]
+  };
+
+  var ALIGN_POS = {
+    1:  [],
+    2:  [6, 18],
+    3:  [6, 22],
+    4:  [6, 26],
+    5:  [6, 30],
+    6:  [6, 34],
+    7:  [6, 22, 38],
+    8:  [6, 24, 42],
+    9:  [6, 26, 46],
+    10: [6, 28, 50]
+  };
+
+  var VERSION_INFO = {
+    7:  0x07C94,
+    8:  0x085BC,
+    9:  0x09A99,
+    10: 0x0A4D3
+  };
+
+  function toUtf8Bytes(str){
+    var bytes = [];
+    for(var i=0;i<str.length;i++){
+      var c = str.charCodeAt(i);
+      if(c < 0x80){
+        bytes.push(c);
+      }else if(c < 0x800){
+        bytes.push(0xC0 | (c >> 6), 0x80 | (c & 0x3F));
+      }else if(c < 0x10000){
+        bytes.push(0xE0 | (c >> 12), 0x80 | ((c >> 6) & 0x3F), 0x80 | (c & 0x3F));
+      }else{
+        bytes.push(0xF0 | (c >> 18), 0x80 | ((c >> 12) & 0x3F), 0x80 | ((c >> 6) & 0x3F), 0x80 | (c & 0x3F));
+      }
+    }
+    return bytes;
+  }
+
+  function generate(text){
+    var bytes = toUtf8Bytes(text);
+
+    var version = 0;
+    for(var v=1; v<=10; v++){
+      var cap = VERSION_CAPACITY_M[v];
+      var dataCodewords = cap[1];
+      var lengthBits = (v < 10) ? 8 : 16;
+      var totalBits = 4 + lengthBits + bytes.length * 8;
+      if(totalBits <= dataCodewords * 8){
+        version = v;
+        break;
+      }
+    }
+    if(version === 0) throw new Error('内容过长，无法生成二维码（M 级纠错最大约 200 字节）');
+
+    var cap = VERSION_CAPACITY_M[version];
+    var totalCodewords = cap[0];
+    var dataCodewords = cap[1];
+
+    var bits = [];
+    function pushBits(value, len){
+      for(var i=len-1;i>=0;i--){
+        bits.push((value >> i) & 1);
+      }
+    }
+
+    pushBits(4, 4);
+    pushBits(bytes.length, (version < 10) ? 8 : 16);
+    for(var i=0;i<bytes.length;i++) pushBits(bytes[i], 8);
+
+    var maxDataBits = dataCodewords * 8;
+    var terminator = Math.min(4, maxDataBits - bits.length);
+    if(terminator > 0) pushBits(0, terminator);
+
+    while(bits.length % 8 !== 0) bits.push(0);
+
+    var padBytes = [0xEC, 0x11];
+    var padIdx = 0;
+    while(bits.length < maxDataBits){
+      pushBits(padBytes[padIdx % 2], 8);
+      padIdx++;
+    }
+
+    var dataArr = [];
+    for(var i=0;i<bits.length;i+=8){
+      var b = 0;
+      for(var j=0;j<8;j++) b = (b << 1) | bits[i+j];
+      dataArr.push(b);
+    }
+
+    var ecCount = totalCodewords - dataCodewords;
+    var ecArr = rsEncode(dataArr, ecCount);
+    var allCodewords = dataArr.concat(ecArr);
+
+    var size = version * 4 + 17;
+    var matrix = [];
+    var reserved = [];
+    for(var r=0;r<size;r++){
+      matrix.push(new Array(size).fill(0));
+      reserved.push(new Array(size).fill(false));
+    }
+
+    function placeFinder(row, col){
+      for(var dr=-1; dr<=7; dr++){
+        for(var dc=-1; dc<=7; dc++){
+          var rr = row + dr, cc = col + dc;
+          if(rr < 0 || rr >= size || cc < 0 || cc >= size) continue;
+          var isBorder = (dr === 0 || dr === 7 || dc === 0 || dc === 7);
+          var isCenter = (dr >= 2 && dr <= 4 && dc >= 2 && dc <= 4);
+          matrix[rr][cc] = (isBorder || isCenter) ? 1 : 0;
+          reserved[rr][cc] = true;
+        }
+      }
+    }
+    placeFinder(0, 0);
+    placeFinder(0, size - 7);
+    placeFinder(size - 7, 0);
+
+    for(var i=0;i<8;i++){
+      if(!reserved[7][i]){ matrix[7][i] = 0; reserved[7][i] = true; }
+      if(!reserved[i][7]){ matrix[i][7] = 0; reserved[i][7] = true; }
+      if(!reserved[7][size-1-i]){ matrix[7][size-1-i] = 0; reserved[7][size-1-i] = true; }
+      if(!reserved[size-1-i][7]){ matrix[size-1-i][7] = 0; reserved[size-1-i][7] = true; }
+      if(!reserved[size-8][i]){ matrix[size-8][i] = 0; reserved[size-8][i] = true; }
+      if(!reserved[i][size-8]){ matrix[i][size-8] = 0; reserved[i][size-8] = true; }
+      if(!reserved[size-8][size-1-i]){ matrix[size-8][size-1-i] = 0; reserved[size-8][size-1-i] = true; }
+      if(!reserved[size-1-i][size-8]){ matrix[size-1-i][size-8] = 0; reserved[size-1-i][size-8] = true; }
+    }
+
+    for(var i=8;i<size-8;i++){
+      if(!reserved[6][i]){ matrix[6][i] = (i % 2 === 0) ? 1 : 0; reserved[6][i] = true; }
+      if(!reserved[i][6]){ matrix[i][6] = (i % 2 === 0) ? 1 : 0; reserved[i][6] = true; }
+    }
+
+    var aligns = ALIGN_POS[version];
+    for(var ai=0; ai<aligns.length; ai++){
+      for(var aj=0; aj<aligns.length; aj++){
+        var ar = aligns[ai], ac = aligns[aj];
+        if(reserved[ar][ac]) continue;
+        for(var dr=-2; dr<=2; dr++){
+          for(var dc=-2; dc<=2; dc++){
+            var isBorder2 = (Math.abs(dr) === 2 || Math.abs(dc) === 2);
+            var isCenter2 = (dr === 0 && dc === 0);
+            matrix[ar+dr][ac+dc] = (isBorder2 || isCenter2) ? 1 : 0;
+            reserved[ar+dr][ac+dc] = true;
+          }
+        }
+      }
+    }
+
+    matrix[size-8][8] = 1;
+    reserved[size-8][8] = true;
+
+    for(var i=0;i<9;i++){
+      if(!reserved[8][i]) reserved[8][i] = true;
+      if(!reserved[i][8]) reserved[i][8] = true;
+    }
+    for(var i=0;i<8;i++){
+      if(!reserved[8][size-1-i]) reserved[8][size-1-i] = true;
+      if(!reserved[size-1-i][8]) reserved[size-1-i][8] = true;
+    }
+
+    if(version >= 7){
+      for(var i=0;i<6;i++){
+        for(var j=0;j<3;j++){
+          reserved[size-11+j][i] = true;
+          reserved[i][size-11+j] = true;
+        }
+      }
+    }
+
+    var bitIdx = 0;
+    var totalBits = allCodewords.length * 8;
+    var col = size - 1;
+    var upward = true;
+    while(col > 0){
+      if(col === 6) col--;
+      for(var k=0;k<size;k++){
+        var row = upward ? (size - 1 - k) : k;
+        for(var c=0;c<2;c++){
+          var cc = col - c;
+          if(reserved[row][cc]) continue;
+          if(bitIdx < totalBits){
+            var byteIdx = Math.floor(bitIdx / 8);
+            var bitPos = 7 - (bitIdx % 8);
+            matrix[row][cc] = (allCodewords[byteIdx] >> bitPos) & 1;
+            bitIdx++;
+          }
+        }
+      }
+      col -= 2;
+      upward = !upward;
+    }
+
+    /* 格式信息：纠错等级 M = 00，掩码 0 */
+    var EC_BITS_M = 0;
+    var MASK_ID = 0;
+    var formatData = (EC_BITS_M << 3) | MASK_ID;
+    var fmtVal = formatData << 10;
+    for(var i=14;i>=10;i--){
+      if((fmtVal >> i) & 1){
+        fmtVal ^= 0x537 << (i - 10);
+      }
+    }
+    var formatBits = ((formatData << 10) | (fmtVal & 0x3FF)) ^ 0x5412;
+
+    for(var i=0;i<6;i++){ matrix[8][i] = (formatBits >> i) & 1; }
+    matrix[8][7] = (formatBits >> 6) & 1;
+    matrix[8][8] = (formatBits >> 7) & 1;
+    matrix[7][8] = (formatBits >> 8) & 1;
+    for(var i=9;i<15;i++){ matrix[14-i][8] = (formatBits >> i) & 1; }
+
+    for(var i=0;i<8;i++){ matrix[size-1-i][8] = (formatBits >> i) & 1; }
+    for(var i=8;i<15;i++){ matrix[8][size-15+i] = (formatBits >> i) & 1; }
+
+    matrix[size-8][8] = 1;
+
+    if(version >= 7){
+      var vInfo = VERSION_INFO[version];
+      for(var i=0;i<18;i++){
+        var bit = (vInfo >> i) & 1;
+        var r2 = Math.floor(i / 3);
+        var c2 = i % 3;
+        matrix[size-11+c2][r2] = bit;
+        matrix[r2][size-11+c2] = bit;
+      }
+    }
+
+    return { matrix: matrix, size: size, version: version };
+  }
+
+  function render(container, text, options){
+    options = options || {};
+    var targetSize = options.size || 220;
+    var colorDark = options.colorDark || '#000000';
+    var colorLight = options.colorLight || '#ffffff';
+
+    if(!container) throw new Error('容器元素不存在');
+
+    var result = generate(text);
+    var modules = result.size;
+    var pixelSize = Math.max(2, Math.floor(targetSize / modules));
+    var realSize = pixelSize * modules;
+
+    var canvas = document.createElement('canvas');
+    canvas.width = realSize;
+    canvas.height = realSize;
+    canvas.style.display = 'block';
+    canvas.style.width = targetSize + 'px';
+    canvas.style.height = targetSize + 'px';
+
+    var ctx = canvas.getContext('2d');
+    if(!ctx) throw new Error('无法获取 Canvas 上下文');
+
+    ctx.fillStyle = colorLight;
+    ctx.fillRect(0, 0, realSize, realSize);
+    ctx.fillStyle = colorDark;
+    for(var r=0;r<modules;r++){
+      for(var c=0;c<modules;c++){
+        if(result.matrix[r][c]){
+          ctx.fillRect(c * pixelSize, r * pixelSize, pixelSize, pixelSize);
+        }
+      }
+    }
+
+    container.innerHTML = '';
+    container.appendChild(canvas);
+    return canvas;
+  }
+
+  return {
+    generate: generate,
+    render: render
+  };
+})();
+
+/* =========================================================
+   一、角色数据
+   ========================================================= */
+const ROLES = [
+  { id:'zhang', name:'张建国', meta:'45岁 · 男 · 项目经理', tone:'#ff8a00',
+    brief:'强势务实，项目进度压力巨大，事故后一度被停职。',
+    background:'你是项目的最高负责人，工期和成本压力巨大。事故让你停职三个月，集团已下达最后通牒：若不能顺利复工，你将彻底出局。李国栋生前多次因安全整改问题与你冲突，拖延进度。你曾私下找过他，希望他"灵活处理"，但被严词拒绝。',
+    secrets:[
+      '事故前一周，你通过中间人向孙福贵的公司"借款"100万，用于填补项目资金缺口，条件是后续工程优先向他倾斜。',
+      '你曾对李国栋说过重话："再挡路，就别怪大家不讲情面。"有第三人在场（陈志远）。',
+      '事故当晚，你收到李国栋短信："张总，关于百安公司的事，明天我需要一个解释。"你回复"见面谈"，但并未去工地。',
+      '你手中的"匿名证据"其实是你自己伪造的，目的是在复工会议上一举揪出"害群之马"，重塑权威，并掩盖自己的经济问题。'
+    ],
+    timeline:[
+      '19:00-20:30：在项目部办公室与陈志远开会，争吵进度。',
+      '20:40：收到李国栋上述短信。',
+      '20:45-21:00：独自在办公室，思考如何应对。',
+      '21:05：接到现场出事的电话。'
+    ],
+    goal:'掩盖自己的经济问题，把责任推给别人，保住项目和职位。'
+  },
+  { id:'wang', name:'王秀英', meta:'42岁 · 女 · 安全部副总监（李国栋遗孀）', tone:'#e5484d',
+    brief:'专业冷静，丈夫去世后一直暗中调查。',
+    background:'你是李国栋的妻子，也是他的同事。你坚信丈夫是因调查真相而被灭口。复工在即，你决心利用最后一次会议，找出真凶。你怀疑所有人，包括看似公允的张建国。',
+    secrets:[
+      '你找到了丈夫藏起来的U盘，内含劣质扣件采购合同、假证人员名单的扫描件，以及他与"举报人"的加密聊天记录。',
+      '那个"举报人"就是你。你用匿名号码与丈夫联系，提供线索，因为担心直接出面会连累你。',
+      '你曾偷偷将工地不合格的扣件样本送往外省检测，报告显示其抗拉强度仅为国标的30%。',
+      '你丈夫账户那50万，是你为了迷惑真凶而伪造的转账记录，你想看看谁会因此露出马脚。'
+    ],
+    timeline:[
+      '19:30：在家中发现U盘，查看内容。',
+      '20:20：用匿名号码给李国栋发短信："小心，他们知道你拿到了全部证据。"',
+      '20:40-21:00：驱车前往工地，在门口被保安吴建国拦下，称"里面断电检查，不让进"。你在门外焦急等待。',
+      '21:10：接到电话，冲入现场。'
+    ],
+    goal:'找出杀夫真凶，同时隐瞒自己私下调查的行为。'
+  },
+  { id:'chen', name:'陈志远', meta:'38岁 · 男 · 总工程师', tone:'#3fb950',
+    brief:'技术狂人，与李国栋在安全措施上多次冲突。',
+    background:'技术权威，但信奉"效率优先"。你认为李国栋的书呆子气严重阻碍了工程创新与进度。你们在43层核心筒"跳层拆除"模板支撑的方案上有激烈冲突，你坚持认为计算安全，他斥责你草菅人命。',
+    secrets:[
+      '事故当天下午，你擅自下达了口头指令，让木工班组开始部分拆除43层的模板支撑，这严重违反程序。',
+      '你与建材供应商有利益往来，你指定的部分高强度钢材被偷换成了低标号产品，差价被你吞没。',
+      '李国栋死前曾威胁要就"材料问题"和"违规拆除"正式向建设主管部门举报你。',
+      '事故当晚你去工地，是为了查看违规拆除的进展，并想找李国栋做最后"谈判"。'
+    ],
+    timeline:[
+      '20:00：在43层楼梯间与李国栋激烈争吵，被他用手机录音。',
+      '20:15：愤然离开，在工地门口遇到保安吴建国，打了个招呼。',
+      '20:30：回到附近宿舍，有室友可以作证（但室友已提前被你买通）。'
+    ],
+    goal:'掩盖违规指令与材料问题，把嫌疑引向别处。'
+  },
+  { id:'liu', name:'刘强', meta:'50岁 · 男 · 木工班组长', tone:'#c98b3a',
+    brief:'老北京，工地老炮儿，事故当晚最后一个见到李国栋的人。',
+    background:'工地老炮儿，讲义气，但文化不高。孙福贵是你的表亲，他的脚手架活很多都靠你关照才拿到。你深知43层东侧脚手架"连墙件"数量不足且不牢靠，私下让兄弟加挂了一张安全网，没报备，怕被要求拆除。',
+    secrets:[
+      '那张救了李国栋一次的安全网是你私挂的。你挂它是出于老师傅的直觉和经验，知道那里是"鬼门关"。',
+      '你亲眼看见孙福贵的人运来那批"轻飘飘"的扣件，你警告过他，但他给你塞了个红包让你闭嘴。',
+      '事故当晚，你看到李国栋在脚手架上用手机拍那些劣质扣件和松动的连墙件。',
+      '你不是"第一个到达"，你是一直在附近。你听到争吵和动静，跑过去时，看到李国栋摔在网上，然后脚手架才塌。你怕担责，躲了几分钟才喊人。'
+    ],
+    timeline:[
+      '19:30：和李国栋一起检查43层，他拍照时你假装没看见。',
+      '20:20：在43层下方抽烟，听到楼上隐约有争吵。',
+      '20:40：听到一声闷响和金属变形声，跑过去看到李国栋在网上呻吟，脚手架正在倾倒。你吓呆了。',
+      '20:49：跑去喊人。'
+    ],
+    goal:'保住自己的私设安全网不被追责，同时不想坑了表亲孙福贵。'
+  },
+  { id:'zhao', name:'赵小雨', meta:'26岁 · 女 · 资料员兼安全记录员', tone:'#7aa2f7',
+    brief:'刚毕业两年，事故当晚加班整理资料。',
+    background:'你是李国栋的远房侄女，受他资助上学。他安排你进项目，是为了让你帮忙暗中收集和整理证据。你崇拜他，也害怕他调查的事。',
+    secrets:[
+      '你手里有李国栋事故当晚随身携带的录音笔（备份）。录音清晰地录下了他与另一个人的对话、推搡声和坠落后的呻吟。',
+      '你按照李国栋的指示，故意弄丢了9月15日43层的安全交底记录，因为那上面有陈志远违规批准提前拆除的签字。原件已交给李国栋。',
+      '你看到周文静监理在事故前一天，悄悄从李国栋的办公室出来，神色慌张。',
+      '你暗恋陈志远，曾无意间向他透露过"李总监在收集材料证据"，你怀疑正是这句话害死了李国栋。'
+    ],
+    timeline:[
+      '20:00-20:30：在办公室假装整理资料，实用电脑备份录音笔内容。',
+      '20:45：看到窗外43层东侧灯光熄灭（停电），心中不安。',
+      '20:50以后：一直待在办公室，直到听到外面骚动。'
+    ],
+    goal:'完成李国栋的遗愿，把证据交给值得信任的人，同时隐瞒自己泄露消息的过错。'
+  },
+  { id:'sun', name:'孙福贵', meta:'55岁 · 男 · 脚手架分包老板', tone:'#d97706',
+    brief:'河北人，事故涉及的部分脚手架由其公司搭设。',
+    background:'你的小公司全指着这个大项目活下去。为了中标，你报出了极低的价格，只能从材料上"节省"。张建国的"借款"是你获得生意的条件之一。',
+    secrets:[
+      '所有劣质扣件都来自一个没有资质的黑作坊，采购合同和发票全是伪造的。',
+      '事故发生后，你第一时间带人连夜更换了43层所有残存的旧扣件，并威胁工人不准说出去。',
+      '你曾向周文静监理行贿5万元，让她对脚手架验收"高抬贵手"。',
+      '你知道李国栋在调查你，事故前三天，你托人给他账户打了50万，试图"私了"，但被他严词拒绝，并说钱会作为证据上缴。'
+    ],
+    timeline:[
+      '19:00-20:00：在工地附近小餐馆请几个工头吃饭，席间抱怨李国栋。',
+      '20:30：接到手下电话，说李总监在43层拍照。你立刻驱车赶往工地。',
+      '20:55：到达工地门口，得知已出事，立刻掉头离开，并安排换扣件的事。'
+    ],
+    goal:'销毁劣质材料证据，把责任推给"使用不当"或其他人。'
+  },
+  { id:'zhou', name:'周文静', meta:'35岁 · 女 · 监理单位代表', tone:'#b45cf0',
+    brief:'严谨刻板，事故前一周曾发出严重安全隐患通知单。',
+    background:'你原则性强，但丈夫重病，急需用钱。孙福贵的贿赂和威胁，张建国的施压，让你在"严格监理"和"睁只眼闭只眼"间痛苦挣扎。你曾匿名向李国栋提供过一些线索。',
+    secrets:[
+      '你收了孙福贵的钱，在脚手架验收报告上签了合格。那份要命的报告原件，事故后被李国栋调走核查。',
+      '李国栋死前曾找你深谈，给你最后通牒：要么主动向主管部门坦白，要么他连同你三年前另一个项目的丑闻一起举报。你极度恐慌。',
+      '事故当晚，李国栋约你在43层"最后谈一次"。你去了，想求他放过你。',
+      '你是真凶。谈判破裂，他转身欲走时，你情绪崩溃，从背后推了他一把。你本意只是想阻止他离开，没想到他摔了出去。你吓傻了，没有施救，也没有喊人，趁黑逃离。'
+    ],
+    timeline:[
+      '20:25：到达43层，与李国栋交谈。',
+      '20:40：争吵升级，你推了他。',
+      '20:40-20:45：在黑暗和恐惧中呆立，听到下方有安全网承接的声音和刘强跑来的脚步声，慌忙从西侧楼梯逃离。',
+      '21:00后：假装刚接到消息，从监理办公室赶到现场。'
+    ],
+    goal:'掩盖自己受贿与推人的事实，把死因引向脚手架质量问题。'
+  },
+  { id:'ma', name:'马国涛', meta:'48岁 · 男 · 塔吊指挥长', tone:'#2aa198',
+    brief:'工地老员工，事故当晚在塔吊操控室值班。',
+    background:'工地老人，负责塔吊运行和顶部监控。你目睹了太多工地上的黑幕，但为了饭碗，习惯性沉默。',
+    secrets:[
+      '你的塔吊红外监控一直偷偷运行，记录了完整过程。你拷贝了视频，以此向孙福贵勒索了2万元"封口费"。',
+      '你看到停电是有人拉掉了43层东侧专用的临时电闸，拉闸的人身影很像保安队长吴建国。',
+      '你发现徐丽华安排的那个无证电工，是张建国的远房亲戚。',
+      '事故后，吴建国找你喝过酒，暗示你"有些东西不该看，不该说"。'
+    ],
+    timeline:[
+      '20:00-20:47：一直在塔吊驾驶室。目睹了两人争执、停电、推搡、第一次坠落、周文静逃离，以及最后的脚手架坍塌。',
+      '20:50：用手机远程下载了监控视频备份。',
+      '21:00：像往常一样下班，当做什么都没发生。'
+    ],
+    goal:'保住饭碗，不暴露自己勒索的事实，同时不想成为替罪羊。'
+  },
+  { id:'wu', name:'吴建国', meta:'60岁 · 男 · 项目安保队长', tone:'#8b95a3',
+    brief:'退伍军人，负责工地监控和出入管理。',
+    background:'退伍军人，负责工地安防和监控。你感激张建国给你这份工作，对他言听计从。',
+    secrets:[
+      '事故当晚，是张建国电话指示你，在20:40准时拉掉43层东侧的电闸，理由是"配合电工检修"，并让你删除相关时段的门禁和监控记录。你照做了。',
+      '你看到陈志远20:15离开，也看到孙福贵20:55在门口徘徊。你还拦住了想进入的王秀英。',
+      '你私自保留了电闸操作记录的手机拍照和与张建国的通话录音，作为自己的护身符。',
+      '你怀疑张建国想害李国栋，但你不确定，只是服从命令。'
+    ],
+    timeline:[
+      '20:15：见到陈志远离开，记录。',
+      '20:35：接到张建国电话指令。',
+      '20:40：准时拉断电闸。',
+      '20:45-20:50：在监控室删除指定时间段记录。',
+      '20:55：在门口拦住王秀英，并看到孙福贵的车。'
+    ],
+    goal:'保护自己不被当作替罪羊，尽量不供出张建国。'
+  },
+  { id:'xu', name:'徐丽华', meta:'40岁 · 女 · 劳务公司负责人', tone:'#e07a5f',
+    brief:'负责200多名工人的调配管理。',
+    background:'你的任务是管理工人，控制成本。项目资金紧张，你的工资款被拖欠，压力巨大。',
+    secrets:[
+      '那三个持假证的特种作业人员，是张建国和孙福贵硬塞给你的，你不得不安排。',
+      '事故当晚导致短路停电的无证电工，是张建国的亲戚，你不敢不用。',
+      '你曾听到张建国和陈志远在办公室密谈，提到"如果李总监出了意外，保险理赔金可以用来缓解资金压力"。你当时吓出一身冷汗。',
+      '你手里有一份秘密的工人薪资表，上面记录了给张建国、陈志远等人的"好处费"支出，这是你自保的底牌。'
+    ],
+    timeline:[
+      '全天：在劳务办公室处理工人薪资纠纷。',
+      '20:40：接到电工电话说跳闸了，你骂了他一顿，让他赶紧修。',
+      '21:00后：听到出事，赶到现场维持工人秩序。'
+    ],
+    goal:'保住自己的劳务合同和欠薪，不被推出来背锅。'
+  }
+];
+
+/* =========================================================
+   二、分幕数据
+   ========================================================= */
+const ACTS = [
+  { title:'重启会议', dur:'预计 5 分钟',
+    scene:'京华之巅项目部会议室，墙上挂着"安全生产责任重于泰山"的标语。窗外可以看到已经建到43层的混凝土结构骨架。时间是下午2点。',
+    script:`<span class="cue">（凝重扫视全场）</span>各位同事，请坐。京华之巅项目停工三个月，今天本应是复工前的最后一次安全整改会。但在会议开始前，我必须告诉大家一件事。
+
+<span class="cue">（举起黄色信封）</span>
+
+昨天，我收到了这个。里面有一份李总监事故当晚的私人记录副本，和一段经过技术恢复的模糊监控视频。记录显示，他死前正在调查的事情，远不止脚手架质量问题那么简单。而视频显示，<span class="em">20点40分，43层上不止他一个人。</span>
+
+<span class="cue">（停顿，制造压力）</span>
+
+我已将情况同步给警方。他们给了我们三个小时——就在这个会议室里。三小时内，如果我们不能自己理清真相，找出那个该为李总监之死负责的人，那么警方将全面介入，项目永久停工，而凶手将以故意杀人罪被逮捕。现在，时间是下午2点整。我们开始。
+
+<span class="cue">（灯光忽明忽暗，窗外雷声隐隐）</span>`,
+    tips:['主持人退场，切换为旁白角色，语气要压得住场。',
+      '念到"43层上不止他一个人"时务必停顿 3 秒，制造压迫感。',
+      '此幕只开场，不回答任何提问，直接进入第二幕。']
+  },
+  { title:'事故重现', dur:'预计 25 分钟 + 第一轮搜证',
+    scene:'玩家共同还原事故当晚（9月15日）的完整时间线。',
+    script:`现在，请各位先用 5 分钟，再次确认自己的角色背景、秘密和目标。随后，我们按照座位顺序，每人用 2 分钟时间，做一个简单的自我介绍：你是谁，你与李国栋总监是什么关系，事故当晚你在哪里。
+
+<span class="em">注意：此时只需透露剧本中"背景"部分和公开的时间线，切勿暴露"秘密"！</span>
+
+<span class="cue">（玩家轮流介绍。主持人记录要点，并观察谁特别紧张或言辞闪烁）</span>
+
+很好。现在，我们需要共同还原事故当晚，从晚上7点到9点的完整时间线。请各位根据记忆，尽可能详细地说明自己的行动轨迹。一旦出现矛盾或空白，其他人可以立即质询。
+
+<span class="em">【关键时间点】</span>
+19:30 — 李国栋与刘强在43层检查脚手架
+20:00 — 李国栋与陈志远在楼梯间发生激烈争吵
+20:15 — 赵小雨看到李国栋独自走向东侧悬挑区域
+20:30 — 马国涛从塔吊看到43层有两人身影
+20:40 — 停电30秒（整栋楼备用电源启动）
+20:47 — 坠落发生
+20:49 — 刘强第一个到达坠落点`,
+    tips:['当陈志远说到20:00与李国栋争吵时，问："争吵内容是什么？有没有其他人听到或看到？"',
+      '当刘强说到20:40听到响声时，追问："你具体在什么位置？为什么那个时间会在那里？看到或听到了什么具体细节？"',
+      '当周文静说到自己整晚在办公室时，问："有谁能证明吗？你最后一次联系李总监是什么时候？"',
+      '当张建国提到收到李国栋短信时，问："短信具体内容？你为什么没有立即去现场？"',
+      '当王秀英提到在工地门口被拦下时，问："拦你的人是谁？理由是什么？"',
+      '本环节目标：让玩家自行暴露出时间线上的多处矛盾。']
+  },
+  { title:'暗流涌动（秘密揭示）', dur:'预计 40 分钟',
+    scene:'第一轮搜证 + 时间线质询。每个角色的秘密开始相互碰撞。',
+    script:`时间线存在太多矛盾。现在，我们将公布第一批由"警方"和"项目内部"提供的证据。同时，每个人手中都有一份《安全整改任务清单》，上面可能暗藏与你或其他人都有关的线索。你们有 15 分钟时间查看证据、交换清单信息，并进行私下交谈。之后，进行集中讨论。
+
+<span class="em">【第一轮关键证据】</span>
+1. 门禁刷卡记录（吴建国管理）：显示张建国、陈志远、周文静在当晚均有出入记录，时间点微妙。
+2. 塔吊监控截图（马国涛提供）：模糊显示43层两人影。
+3. 李国栋手机通话记录（王秀英可部分提供）：显示与周文静、孙福贵、匿名号码的通话。
+4. 脚手架扣件对比照片及检测报告（王秀英可提供）：明确显示劣质产品。
+5. 监理通知单（周文静签发）：事故前一周发出，但未彻底整改。`,
+    tips:['引导讨论逐步深入：① "停电的30秒，究竟发生了什么？谁是最大受益者？"',
+      '② "劣质扣件是如何通过采购、验收层层关卡的？谁在其中获利？"',
+      '③ "李总监在调查什么系统性问题？谁最有理由让他闭嘴？"',
+      '④ "从证据看，是意外、过失杀人还是故意谋杀？"',
+      '主持人要保护非凶手角色的体验，让每个人都有自己的秘密需要守护。']
+  },
+  { title:'致命发现', dur:'预计 50 分钟',
+    scene:'关键证据浮现，案情出现第一次实质性反转。',
+    script:`<span class="em">【关键证据浮现】</span>
+
+1. 李国栋的手机云端备份（赵小雨提供密码）：一段20:45录制的音频，背景有打斗声和一句"你挡了太多人的路"。
+2. 脚手架扣件金属分析报告（王秀英暗中送检）：显示断裂扣件金属疲劳度异常，属于劣质产品。
+3. 停电前后塔吊红外监控（马国涛藏匿）：虽然43层监控被删，但塔吊红外摄像头拍到了两个热源在坠落前30秒的搏斗。
+4. 陈志远的日程表（在其办公室发现）：显示他8:30与建材供应商有会面，但供应商证实会议是8:00。
+5. 神秘转账记录（警方提供复印件）：李国栋账户的50万来自一个海外公司，该公司与孙福贵的脚手架公司有股权关联。
+
+<span class="em">【推理挑战】</span>
+1. 停电的真正目的？
+2. 劣质脚手架扣件是哪一环节被使用的？
+3. 李国栋发现了什么核心秘密？
+4. 谁有作案时间和动机？`,
+    tips:['音频应在讨论陷入僵局时放出，引爆"第三人"疑点。',
+      '金属分析报告可由王秀英在质疑孙福贵时主动出示。',
+      '红外监控视频应由主持人以"警方恢复数据"名义在关键时刻展示。',
+      '日程表可在搜查陈志远办公室环节发现。',
+      '转账记录适合在最终指认前作为"警方补充证据"提供。']
+  },
+  { title:'真相与抉择（反转）', dur:'预计 30 分钟',
+    scene:'所有证据摊开，最后指认。',
+    script:`距离警方给出的最后期限还有30分钟。我刚刚收到技术部门传来的最后两份关键证据，这将决定所有人的命运。
+
+<span class="em">【终极证据】</span>
+
+<span class="cue">（播放模拟监控视频片段，配以低沉音效）</span>
+视频证明：存在推搡，李总监第一次坠落被拦截，随后脚手架二次坍塌。
+
+<span class="cue">（展示李国栋录音笔文字摘要）</span>
+"周工，你收钱签字的时候，想过今天吗？我不会再给你机会了……（推搡声）啊！"
+
+现在，所有的碎片都应该能拼凑起来了。请各位根据所有证据，指出：
+1. 谁导致了李国栋的第一次坠落？
+2. 谁的行为直接导致了他的死亡？
+3. 还有谁，应该为这起悲剧负上不可推卸的责任？
+
+你们有15分钟进行最后的辩论和指认。`,
+    tips:['若推理完全偏离：可以"警方又提供了一份补充材料"为由，投放指向性更强的线索。',
+      '若指认真凶受阻：可以问："谁最有理由害怕李国栋明天去解释某件事？"',
+      '若时间不足：压缩第二轮讨论时间，直接进入最终证据投放。',
+      '强调主题：在讨论中，反复将玩家的行为与"系统性风险"联系起来。']
+  },
+  { title:'余波', dur:'预计 30 分钟',
+    scene:'结局抉择与主题升华。',
+    script:`真相已经浮出水面。但故事的结局，由你们共同决定。现在，我们将进行匿名投票，选择项目和李国栋案的最终处理方式：
+
+<span class="em">选项 A（报警处理）</span>：将所有证据和盘托出，所有人接受法律审判。项目永久停工，两千工人失业。
+<span class="em">选项 B（内部处理与改革）</span>：周文静自首，承担主要刑责。其他人留下，但接受降职、罚款、公开检讨，并签署最严格的安全责任书，项目在全面透明化改革后继续。
+<span class="em">选项 C（掩盖与同盟）</span>：统一口径为"意外"，结为利益同盟，掩盖所有违规。项目继续，但秘密将成为彼此永恒的枷锁，且风险未知。
+
+<span class="cue">（投票时间：3 分钟）</span>
+
+各位，游戏即将结束，但现实中的工地依然忙碌。
+
+《安全生产法》明确规定，生产经营单位必须建立健全全员安全生产责任制。刚才故事里的每一个违规操作，都能在真实案例中找到影子。
+
+海恩法则指出：每一起严重事故的背后，必然有29次轻微事故、300起未遂先兆以及1000起事故隐患。
+
+在这个故事里，李国栋的死，不是周文静一个人的推搡造成的。它是张建国的纵容、陈志远的违规、孙福贵的贪婪、徐丽华的妥协、吴建国的盲从、刘强的沉默、马国涛的漠视、赵小雨的犹豫，以及周文静最后的疯狂，共同堆叠而成的必然。
+
+安全不是成本，是生命。每一个签名，都是一份生死状。
+
+请记住，今天你们在游戏中所做的每一个选择，在现实中，都关乎无数个家庭的圆满与破碎。我是主持人，游戏到此结束。谢谢大家。
+
+<span class="cue">（灯光暗下，可以响起一声悠长的警笛声或工地施工的背景音，然后回归寂静）</span>`,
+    tips:['本幕是全剧的落点，务必把节奏慢下来，让玩家从"找凶手"转向"反思系统"。',
+      '可以请每位玩家用一句话说说：如果重来一次，你的角色会在哪个节点做出不同的选择？']
+  }
+];
+
+/* =========================================================
+   三、证据数据
+   ========================================================= */
+const CLUES = [
+  { round:1, ico:'📄', title:'安全交底记录缺失页', holder:'赵小雨保管', ownerId:'zhao',
+    desc:'9月15日43层核心筒及外架作业的安全交底记录缺失关键页。交底人李国栋，接受交底班组为木工班组、脚手架班组。\n\n主要交底内容：\n3. 43层核心筒模板支撑体系须待混凝土强度报告达到100%设计强度，并经总工书面批准后方可拆除，严禁擅自作业。\n4. 东侧悬挑脚手架第7-9轴区域，连墙件昨日检查发现有缺失，已挂红牌禁止倚靠，待今日下午加固验收合格后方可使用。\n5. 所有高处作业人员必须双钩安全带。\n\n下方审批栏：\n补充意见："鉴于工期紧迫，43层模板支撑可于今日20:00后先行拆除东侧部分，以提供作业面。混凝土强度问题由我负责。——陈志远（总工程师）"\n\n李国栋批复："此意见严重违反专项方案，不予认可，严禁拆除！请立即撤销口头指令。——李国栋，9.15，18:30"',
+    hidden:['赵小雨的秘密：这张纸正是她"故意弄丢"的。它直接证明了陈志远曾违规下达拆除指令，并与李国栋发生严重冲突。',
+      '关键疑点：李国栋的批复时间是下班后（18:30），说明他是在得知违规指令后特意留下处理此事，为当晚去43层埋下伏笔。']
+  },
+  { round:1, ico:'🪜', title:'脚手架验收报告', holder:'孙福贵签字', ownerId:'sun',
+    desc:'分包单位：福贵脚手架工程有限公司\n验收部位：43层悬挑脚手架（第7-9轴）\n验收日期：2023年9月10日\n\n检查项目：\n1. 立杆间距：符合要求 —— 否\n2. 连墙件数量与牢固性：符合要求 —— 否（备注：第8轴缺失2处）\n3. 扣件扭力矩：符合要求 —— 否（备注：抽检3处不足）\n4. 悬挑钢梁锚固：符合要求 —— 是\n5. 安全网张挂：符合要求 —— 是\n\n验收结论：整改后合格\n施工单位签字：孙福贵\n监理单位签字：周文静（日期：9.10）\n建设单位签字：李国栋（日期：9.12，旁有红笔字："复检仍不合格，严禁使用！"）',
+    hidden:['孙福贵的秘密：报告显示其工程不合格，但他通过行贿让周文静签字通过。',
+      '李国栋的坚持：他是在复检后依旧签了"不合格"，并写下警告，这激化了他与孙福贵、周文静的矛盾。',
+      '矛盾点：周文静在同一份报告上签了"整改后合格"，却在事故前一天签发了措辞严厉的整改通知单。']
+  },
+  { round:1, ico:'⚠️', title:'监理整改通知单', holder:'周文静签发', ownerId:'zhou',
+    desc:'致：京华之巅项目部\n事由：关于43层作业面存在的重大安全隐患\n编号：JL-ZG-2023-089\n\n发现问题：\n1. 43层东侧悬挑脚手架连墙件缺失，整体稳定性存疑。\n2. 现场发现部分脚手架扣件存在肉眼可见的砂眼、裂纹，疑似劣质产品。\n3. 模板支撑体系有被擅自拆除的痕迹。\n\n整改要求：立即全面停工，对上述问题彻底排查整改，并提交书面报告。\n\n签发人：周文静\n日期：2023年9月14日',
+    hidden:['周文静的秘密：她签发了如此严厉的通知单，却在孙福贵的验收报告上签字合格，行为矛盾。',
+      '压力来源：通知单日期是事故前一天，这可能是她向李国栋证明自己"尽职"的方式，也可能是在巨大压力下（如被威胁）做出的最后警告。']
+  },
+  { round:1, ico:'📹', title:'塔吊监控截图', holder:'马国涛提供', ownerId:'ma',
+    desc:'设备编号：TC-02 红外热成像摄像头\n时间戳：2023-09-15 20:41:03\n\n图像描述：一张模糊的黑白热成像图。43层楼板边缘，可以清晰看到两个明亮的白色人形热源（表示有体温）。热源A呈坠落姿态，半悬于楼板外。热源B站在楼板边缘，手臂部分似乎与热源A有接触。背景中，部分脚手架结构呈暗灰色（温度低）。\n\n截图文件命名：事故当晚备份_勿删.avi（修改日期：9月15日20:55）',
+    hidden:['马国涛的秘密：文件名证明他事故当晚就备份了视频，却谎称不知情。',
+      '决定性证据：该截图直接证明李国栋坠楼时，另一个人在旁且有接触，排除了单纯失足的可能，指向推搡。']
+  },
+  { round:1, ico:'🚪', title:'门禁刷卡记录', holder:'吴建国管理', ownerId:'wu',
+    desc:'43层东区安全门禁记录（9月15日）：\n\n姓名 / 工号 / 进入时间 / 离开时间\n李国栋 / 0012 / 19:28 / ——\n刘强 / 0456 / 19:30 / 20:50\n周文静 / 0801 / 20:25 / 20:45（关键记录）\n陈志远 / 0008 / 20:00 / 20:16\n张建国 / 0001 / 20:38 / 未记录（疑点）',
+    hidden:['吴建国的秘密：记录显示张建国在关键时间进入，却无离开记录。这符合吴建国受张建国指示删除自己离开记录的剧情。',
+      '周文静的谎言：记录证明她20:25-20:45在43层，与她自称"整晚在办公室"矛盾。',
+      '陈志远的时间：证明他20:16已离开，与事故主要时间错开，减轻其直接嫌疑。']
+  },
+  { round:1, ico:'🛡️', title:'劳务人员意外保险单', holder:'徐丽华处理', ownerId:'xu',
+    desc:'保险公司：安泰人寿\n保单号：AT202309BJZT\n投保人：北京华兴劳务有限公司（徐丽华）\n\n被保险人工种/姓名/身份证号：\n电工，张强，132xxxxxxxxxxxx3235（持假证人员1）\n架子工，王伟，110xxxxxxxxxxxx101X（孙福贵亲戚）\n焊工，李斌，131xxxxxxxxxxxx4528（持假证人员2）\n\n特别约定：本保单针对高处作业，须严格遵守安全规范，违章作业导致事故理赔额减半。\n受益人：均为法定。',
+    hidden:['徐丽华的秘密：保单明确了三名问题人员（与整改清单对应）。',
+      '张建国的秘密：电工"张强"的身份证号属地与张建国相同，暗示亲戚关系。',
+      '动机伏笔："违章作业理赔减半"的条款，与张、陈谈论"利用保险金缓解压力"的阴谋形成暗合。']
+  },
+  { round:1, ico:'📓', title:'李国栋的私人笔记本', holder:'张建国出示', ownerId:'zhang',
+    desc:'一个黑色皮质笔记本，内页有撕扯痕迹。\n\n近期摘录：\n9月10日：复查43层脚手架，孙福贵以次充好，周文静何以放行？需查资金往来。\n9月12日：账户突入50万，来自"百安"。钓鱼？恐吓？已截图保存，未动分文。\n9月13日：陈志远私下催促模板拆除，其与建材商王总过从甚密。材料可能也有问题。\n9月14日：约谈周文静，她神情恐慌，提及三年前"旧事"。疑有把柄在人手。\n9月15日：今晚约了周在43层面谈，摊牌。她若自首，可给她机会。若不然……随身带了录音笔。张总似乎也牵涉其中，他今晚约我"谈谈资金"，直觉不对劲，分开见面。',
+    hidden:['核心信息汇总：笔记本串联了所有主要角色的疑点——孙福贵的料、周文静的贿与旧案、陈志远的违规与材料、张建国的资金。',
+      '死亡之约：明确写出当晚同时约了周文静（摊牌）和张建国（谈资金），解释了为何两人都可能出现在现场或其附近。',
+      '被撕页：暗示可能有更敏感的名单或记录被凶手撕走。']
+  },
+  { round:1, ico:'📞', title:'手机通话记录', holder:'王秀英提供', ownerId:'wang',
+    desc:'机主：李国栋\n时间段：2023年9月15日\n\n18:05 主叫 张建国 2分31秒\n19:55 被叫 匿名号码A 1分10秒\n20:10 主叫 周文静 4分15秒\n20:25 被叫 孙福贵 0分45秒\n20:35 被叫 匿名号码A 0分10秒（未接）\n\n王秀英提供的说明：\n"匿名号码A是我丈夫死前一周开始联系的线人，我曾试图回拨，已关机。最后一次未接来电，正是他坠落前几分钟。"',
+    hidden:['王秀英的秘密：她就是这个"线人"，用匿名号码与丈夫联系。',
+      '关键时间线：20:10与周文静的通话，应是为确认43层见面。20:35的未接来电，正是王秀英（匿名号码A）在工地外担心丈夫所打，证明当时李国栋已无法接电话。']
+  },
+  { round:1, ico:'🧪', title:'混凝土强度检测报告', holder:'陈志远负责', ownerId:'chen',
+    desc:'委托单位：京华之巅项目部\n检测部位：43层核心筒C40混凝土\n取样日期：2023年9月13日\n标准要求28天强度：≥40MPa\n本次快速检测结果（7天）：32.5MPa\n（旁有手写批注："按增长曲线推算，28天强度约38-39MPa，略低于设计值。"）\n\n检测单位：北京建科检验中心\n\n报告审核栏：\n技术负责人意见："强度未达标，严禁提前拆除模板支撑。——李国栋，9.14"\n总工程师批示："采用早强剂及保温养护后，可满足承载要求。同意于9月15日晚开始局部拆除作业。——陈志远，9.15"',
+    hidden:['陈志远的秘密：他违背客观数据和李国栋的明确反对，强行批准拆除，是导致支撑体系可能提前失效的直接技术原因。',
+      '专业掩盖：他的批示使用了专业术语（早强剂、保温养护），为违规决定披上了"技术判断"的外衣。']
+  },
+  { round:1, ico:'🌬️', title:'当晚气象记录', holder:'公共信息', ownerId:'public',
+    desc:'北京市气象台官方记录\n日期：2023年9月15日\n地点：中央商务区\n\n20:00-21:00 天气实况：\n风速：3-4级，阵风5级（备注：足以使高层未固定的轻型材料晃动）\n能见度：良好\n降水：无\n特殊天气事件：20:40-20:41，记录到一次局地、瞬时的电压波动事件，影响范围约1平方公里，可能与工地短路有关。',
+    hidden:['环境因素：阵风解释了脚手架可能存在的额外晃动。',
+      '科学印证：官方的"电压波动"记录，从侧面印证了当晚20:40左右工地确实发生了大规模停电，且可能是短路引起，与徐丽华管理的无证电工操作失误的剧情吻合。']
+  },
+  { round:2, ico:'🎙️', title:'李国栋手机云端备份音频', holder:'赵小雨提供密码', ownerId:'zhao',
+    desc:'文件名：20230915_2045_紧急录音.m4a\n文件大小：48.2MB　时长：2分17秒\n录音设备：iPhone13Pro（李国栋工作手机）\n\n【音频文字转录】\n（背景音：持续的风声、隐约的金属摩擦声）\n\n20:45:03 李国栋（压低声音）："周工，你给我的这份材料我看完了。百安公司的股权结构，还有你三年前签的那份验收报告……"\n20:45:15 周文静（声音颤抖）："李总监，你……你到底想怎样？把东西还给我！"\n20:45:22 李国栋："还给你？然后看着43层的脚手架再塌一次？今天下午的检测结果出来了，碳含量超标三倍！这是杀人！"\n20:45:35（急促的脚步声，金属碰撞声）\n20:45:41 周文静："你根本不懂！这个项目不能停！张总、陈总、孙老板……多少人指着它活！你把证据交出去，大家都得死！"\n20:45:55 李国栋："那工人的命就不是命？！我最后说一次，明天一早，你和我一起去安监局！"\n20:46:03（剧烈的推搡声，衣物摩擦声）\n20:46:08 周文静（嘶喊）："你别逼我！！"\n20:46:11 李国栋（惊恐）："你干什么？！放手！"\n20:46:15（沉重的撞击声，金属栏杆震动声）\n20:46:18 陌生男声（低沉，咬牙切齿）："李总监……你挡了太多人的路。"\n20:46:22 李国栋（惊恐）："是你？！你怎么会——啊！！！"\n20:46:25（身体坠落声，安全网被冲击的闷响）\n20:46:30 周文静（崩溃哭泣）："完了完了……"\n20:46:35 陌生男声（冷静）："闭嘴。按计划做。记住，今晚你没见过我。"\n20:46:40（快速远去的脚步声）\n20:46:50 李国栋（微弱，痛苦呻吟）："小雨……备份……密码是……"\n（录音结束）',
+    hidden:['录音中出现第三个人（陌生男声），证明现场不止周文静。',
+      '李国栋最后提到"小雨"和"备份"，指向赵小雨。',
+      '"挡了太多人的路"成为关键台词，暗示这是一场有预谋的围杀。',
+      '注意：录音里的"陌生男声"与周文静的单独行动存在矛盾——这正是剧本留给主持人的灵活空间。']
+  },
+  { round:2, ico:'🔬', title:'脚手架扣件金属分析报告', holder:'王秀英暗中送检', ownerId:'wang',
+    desc:'报告编号：MJFX-2023-0918\n委托方：匿名（王秀英使用化名"王安全"）\n检测机构：北京材料科学研究院司法鉴定中心\n送检样品：脚手架直角扣件1个（取自事故现场废墟）\n比对样品：国标GB15831-2006标准扣件\n\n检测结果：\n抗拉强度：标准≥330MPa，实测217MPa —— 不合格\n伸长率：标准≥8%，实测5.2% —— 不合格\n硬度（HB）：标准120-163，实测89 —— 不合格\n碳含量：标准0.32-0.42%，实测0.68% —— 严重超标\n硫含量：标准≤0.035%，实测0.12% —— 严重超标\n磷含量：标准≤0.035%，实测0.09% —— 严重超标\n\n鉴定意见：该扣件为使用劣质再生钢铁铸造的伪劣产品，在正常使用载荷下极易发生脆性断裂。',
+    hidden:['送检日期：2023年9月18日（事故后第三天），取报告时使用的假名"王安全"。',
+      '裂纹起源于扣件螺栓孔边缘，该处存在直径0.3mm的铸造气孔，周围有疲劳辉纹，表明裂纹已扩展。',
+      '与孙福贵"紧急更换扣件"的行为形成完整证据链。']
+  },
+  { round:2, ico:'🌡️', title:'停电前后塔吊红外监控', holder:'马国涛藏匿', ownerId:'ma',
+    desc:'存储位置：C:\\Windows\\System32\\drivers\\etc\\backup\\\n文件名：日常备份_无用.avi（故意误导）\n访问时间：2023-09-15 20:55\n复制记录：20:50 生成副本至马国涛的U盘\n\n【关键帧分析】\n帧1（20:39:55，停电前5秒）：43层东侧平台两个明显人形热源（A、B）。热源A位于平台边缘，姿态为站立；热源B距离A约1.5米，手臂前伸。\n帧2（20:40:05，停电瞬间）：整个画面亮度骤降。热源B突然向热源A快速移动。\n帧3（20:40:15，搏斗开始）：两个热源完全重叠、纠缠，出现37.8℃的高温点，位移约2米。\n帧4（20:40:25，搏斗高潮）：热源A部分区域悬空于平台外，热源B呈现明显的"推搡"姿态，手臂热源与A的胸部区域接触。\n帧5（20:40:35，坠落瞬间）：热源A完全脱离平台，向下坠落；热源B在平台边缘静止约2秒（观察姿态）；热源A在坠落约3米后，温度形态突然改变、扩散（撞击安全网）。\n帧6（20:41:10，二次坍塌）：热源A所在的安全网区域温度形态剧烈扰动，脚手架结构发生崩塌式变化。',
+    hidden:['马国涛的隐藏行为：视频文件存储在塔吊电脑的隐藏文件夹中，文件名为"日常备份_无用.avi"故意误导。',
+      '文件属性显示最后访问时间：2023-09-15 20:55（事故后8分钟），证明他当晚就看过并备份。',
+      '此视频证明：① 李国栋坠楼前曾与人发生肢体冲突；② 他最初可能并未直接坠地；③ 最终的死亡与脚手架的二次坍塌在时间上重合。']
+  },
+  { round:2, ico:'📅', title:'陈志远的日程表', holder:'办公室发现', ownerId:'chen',
+    desc:'工作日志（2023年9月15日）\n\n08:00-08:30【已修改】与建材供应商（王总）会面，商谈43层钢材供应\n　原记录：08:30-09:00　修改笔迹：陈志远本人（蓝色圆珠笔覆盖）\n09:30-11:00 项目进度协调会（张建国主持）\n14:00-16:00 43层混凝土强度数据分析\n16:30-17:30 与李国栋讨论模板拆除方案（不欢而散）\n19:00-20:00【新增手写】去工地检查拆除准备情况　笔迹匆忙，与日常工整字体不同\n20:30-21:00【空白，但有咖啡渍】\n\n【供应商王总的证言（警方询问笔录节选）】\n问：9月15日你和陈志远总工的会面是几点？\n答：早上8点整，在我们公司会议室。陈总说9点前必须赶回项目开会，所以特别约的早。\n问：会议内容？\n答：主要是（犹豫）陈总要求把C40混凝土的粉煤灰掺量从15%提高到25%，说能降低成本。我提醒他这可能影响后期强度，他说"心里有数"。\n问：有其他人知道这次会面吗？\n答：我的秘书小刘可以做证，会议系统也有8:00的预约记录。对了，陈总接了个电话，大概8:25，听他说"李总监……43层……晚上再说"，然后就匆匆走了。',
+    hidden:['陈志远故意将日程从8:00改为8:30，制造不在场证明。',
+      '19:00-20:00的"检查"记录为事后添加，无他人证明。',
+      '20:30-21:00的空白时段恰是案发时间，咖啡渍暗示他当时在办公室。',
+      '8:25的电话内容显示，当天早上他已与李国栋约好"晚上"在43层见面。']
+  },
+  { round:2, ico:'💰', title:'神秘转账记录', holder:'警方提供复印件', ownerId:'public',
+    desc:'【银行交易明细】\n账户名：李国栋\n开户行：中国农业银行北京CBD支行\n\n交易日期：2023-09-12\n交易时间：14:23:18\n交易类型：跨境人民币汇款（收入）\n汇款人：BAIAN SUPPLY CHAIN (HK) LIMITED\n汇款账号：HKB123-456-789-001（汇丰银行香港分行）\n汇款金额：CNY￥500,000.00\n收款金额：CNY￥499,875.00（扣除手续费￥125）\n附言：项目合作咨询费\n\n【百安公司股权调查】\n公司编号：HK-2345678\n注册日期：2022-05-18\n注册地址：香港铜锣湾（与孙福贵堂弟孙富贵的香港住址相同）\n董事：SUN Fugui（孙富贵，孙福贵堂弟）\n股东：SUN Fugui（持股100%）\n\n【资金流向追溯】\n2023-08-20：福贵脚手架公司向"北京永信贸易"转账￥80万\n2023-08-25：北京永信贸易向香港百安公司支付"技术咨询费"$110,000（约合￥78万）\n2023-09-12：百安公司向李国栋账户转账￥50万\n2023-09-13：百安公司剩余资金转至孙富贵个人账户',
+    hidden:['警方分析意见：这是一笔典型的跨境洗钱+行贿操作，资金源头是福贵公司，通过壳公司周转后以"咨询费"名义支付给李国栋。',
+      '时间点在事故发生前3天，有封口费嫌疑。',
+      '李国栋收到款项后未转移、未使用，账户余额一直保持，符合其"留作证据"的性格特点。',
+      '孙福贵的辩解（审讯笔录）："这钱……这钱是李总监主动要的！"（警方备注：此说法与李国栋一贯作风严重不符，且无任何证据支持）']
+  },
+  { round:3, ico:'📍', title:'王秀英的手机基站定位记录', holder:'通信运营商', ownerId:'wang',
+    desc:'机主：王秀英　号码：138xxxx8888\n查询时段：2023-09-15 20:00-21:00\n\n20:05　BJ-CBD-012　家中小区　强\n20:20　BJ-CBD-078　工地南门约200米处　中（驾车接近工地）\n20:25-20:35　BJ-CBD-079　工地生活区/停车场　强（已进入工地范围）\n20:40-20:50　BJ-CBD-079　工地生活区/停车场　强（持续停留）\n20:55　BJ-CBD-078　工地南门约200米处　中（离开工地）\n21:10　BJ-CBD-012　家中小区　强\n\n【通话记录补充】\n20:22：主叫李国栋（未接通，时长0）\n20:35：主叫匿名号码A（即她自己的另一个号码，用于和丈夫单线联系，未接通）\n20:55：被叫项目部座机（接通，通话2分钟，内容为询问现场情况）',
+    hidden:['谎言揭穿：该证据直接证明王秀英在20:25至20:50之间身处工地，而非"整晚在家"，她隐瞒了行程。',
+      '行为解释：结合剧情，她可能是因担忧丈夫而前往工地，在停车场或生活区等待、观察，并试图联系丈夫。',
+      '关键时间点：20:40-20:50的持续停留，覆盖了事故发生的核心时段。',
+      '新疑点：她为何极力隐瞒自己在现场的事实？']
+  },
+  { round:3, ico:'🔓', title:'被修改的门禁记录', holder:'警方技术恢复', ownerId:'public',
+    desc:'【原始电子门禁日志（技术恢复版）— 43层东区安全门】\n\n刷卡人 / 工号 / 动作 / 原始时间 / 修改后时间\n张建国 / 0001 / 进入 / 20:38:12 / 20:15:30\n张建国 / 0001 / 离开 / 20:52:47 / （被删除）\n周文静 / 0801 / 进入 / 20:25:05 / 20:25:05\n周文静 / 0801 / 离开 / 20:44:58 / 20:44:58',
+    hidden:['时间篡改：记录清晰显示，张建国的进入时间被人为从20:38提前至20:15，而离开记录被彻底删除。',
+      '系统漏洞：修改日志的电脑操作记录显示，修改发生在21:30，操作员ID为WUJG-01（吴建国）。',
+      '张建国的矛盾：若按修改后记录，他20:15进入、20:16离开，则与陈志远的离开时间重叠，两人应相遇，但陈志远并未提及。',
+      '吴建国的压力：该证据直指吴建国渎职。他可能辩称是"系统故障"或"受上级压力"。']
+  },
+  { round:3, ico:'✍️', title:'笔迹相似的威胁信', holder:'李国栋办公室抽屉', ownerId:'public',
+    desc:'物证：匿名威胁信（原件，发现于李国栋办公室抽屉）\n\n载体：普通A4打印纸\n内容：为打印字体，唯落款处有一个手写的英文单词"WARNING"（警告），笔迹粗重，带有明显的顿笔和拖尾。\n发现情况：据赵小雨回忆，此信于9月14日早晨被发现塞在李国栋办公室门缝下。\n\n【笔迹鉴定对比报告（节选）】\n鉴定对象A：威胁信上的手写"WARNING"\n鉴定对象B：李国栋笔记本中的日常英文批注（如"Check""Danger"等）\n鉴定机构：北京市公安局文检中心\n\n初步结论：\n1. 书写水平与习惯相似度极高。\n2. 存疑特征：威胁信的笔迹在力度控制上略显刻意，部分转折有"模仿性停顿"。\n3. 鉴定意见：不排除为同一人书写，但存在他人极高水平模仿的可能。',
+    hidden:['核心反转：笔迹相似性制造了一个爆炸性假设——这封威胁信有没有可能是李国栋自己写的？',
+      '指向周文静：另一种可能是，长期作为监理与李国栋有大量文件往来的周文静，极为了解并能够模仿李国栋的笔迹。',
+      '深化关系：此证据揭示了李国栋与周文静之间复杂、微妙且充满张力的关系。',
+      '游戏引导：主持人可引导玩家思考："如果信是假的，谁最需要制造这封假信？"']
+  }
+];
+
+const ROUND_INFO = {
+  1:{ label:'第一轮搜证（基础证据）', act:'第三幕 · 暗流涌动（秘密揭示）', tip:'完成第二幕时间线还原后解锁' },
+  2:{ label:'第二轮（关键证据）', act:'第四幕 · 致命发现', tip:'第一轮讨论陷入僵局时解锁' },
+  3:{ label:'第三轮（终极证据）', act:'第五幕 · 真相与抉择（反转）', tip:'最终指认前解锁' }
+};
+
+const TRUTH = {
+  killer:'周文静',
+  motive:'李国栋发现了周文静长期收受孙福贵贿赂，对安全隐患放水的事实。更关键的是，三年前周文静监理的另一个项目因类似问题倒塌，造成3人死亡，她伪造了报告逃避责任。李国栋找到了当年的幸存者。',
+  method:'周文静当晚以"最后检查"为由约李国栋到43层，承诺提供更多证据。趁李国栋拍摄违规脚手架时，从背后推了他一把。但她不知道，43层东侧下方恰好有一张安全网（刘强私自搭设，未报备），李国栋本应只是受伤。',
+  deathCause:'李国栋坠落在刘强私设的安全网上后，孙福贵的劣质脚手架坍塌，钢管刺穿其胸部。',
+  blackout:'徐丽华安排的无证电工违规操作导致短路，与事故无关，但创造了黑暗条件。',
+  evidenceChain:'赵小雨的录音笔（录有推搡声）+ 马国涛的监控视频（红外影像）+ 刘强的目击证词（看到周文静逃离）+ 王秀英/吴建国手中的电闸操作证据。',
+  helpers:[
+    ['吴建国','受张建国指使拉闸断电、删除监控。'],
+    ['张建国','策划断电、伪造证据、经济问题。'],
+    ['孙福贵','提供劣质材料、行贿、破坏现场。'],
+    ['陈志远','违规指令、材料造假。']
+  ],
+  failures:[
+    ['张建国','重进度轻安全，施加压力'],
+    ['陈志远','技术违规，擅自决策'],
+    ['孙福贵','使用劣质材料'],
+    ['徐丽华','安排无证人员上岗'],
+    ['吴建国','监控管理松懈'],
+    ['马国涛','未及时报告异常'],
+    ['赵小雨','知情不报（保护李国栋调查）'],
+    ['刘强','私自搭设未经验收的安全措施'],
+    ['王秀英','私下调查干扰警方'],
+    ['周文静','受贿、伪造记录、故意杀人']
+  ]
+};
+
+const ENDINGS = {
+  A:{ title:'结局 A · 报警处理',
+    text:'所有证据被完整移交给警方。周文静因故意杀人罪被逮捕，张建国、陈志远、孙福贵、徐丽华、吴建国等人分别因重大责任事故罪、行贿罪、伪造证据罪被追究刑责。\n\n"京华之巅"项目被永久叫停。两千名工人被迫返乡，工地塔吊在风中静止，成为这座城市里一座沉默的水泥墓碑。\n\n没有人赢。但至少，真相没有陪葬。'
+  },
+  B:{ title:'结局 B · 内部处理与改革',
+    text:'周文静在众人的注视下站起身，走出会议室，主动前往公安机关自首，承担主要刑事责任。\n\n其余人员被降职、罚款、公开检讨，并逐一在《安全生产责任书》上签下自己的名字——这一次，每一个签名都真的压上了重量。\n\n项目在全面透明化改革后复工：脚手架全部更换、特种作业人员重新核证、监控系统全时段留痕、安全交底记录双人复核。\n\n李国栋的名字被刻在工地入口的安全警示墙上。每天清晨，工人们从他面前经过。'
+  },
+  C:{ title:'结局 C · 掩盖与同盟',
+    text:'你们统一了口径："意外坠楼"。报告被重新撰写，证据被封存，会议室里的十个人从此拥有了同一个秘密。\n\n项目如期复工，进度甚至更快了。但那根刺，扎在每个人的心里。\n\n三个月后，赵小雨失踪了。她带走了录音笔的原件。\n\n半年后，一封匿名举报信出现在市纪委监委的举报箱里。\n\n秘密不会消失，它只是在等待一个更合适的时机，把所有人一起埋葬。'
+  }
+};
+
+const FINALE = [
+  { id:'endA', ico:'🚨', title:'结局 A · 报警处理', tone:'#e5484d', tno:'结局',
+    brief:'所有人接受法律审判，项目永久停工，两千工人失业。' },
+  { id:'endB', ico:'⚖️', title:'结局 B · 内部处理与改革', tone:'#ff8a00', tno:'结局',
+    brief:'周文静自首承担主责，其他人降职罚款，项目在改革后继续。' },
+  { id:'endC', ico:'🤝', title:'结局 C · 掩盖与同盟', tone:'#b45cf0', tno:'结局',
+    brief:'统一口径为意外，结为利益同盟，秘密将成为永恒的枷锁。' },
+  { id:'truth', ico:'🔍', title:'最终真相', tone:'#e5484d', tno:'真相',
+    brief:'直接行凶者、动机、手法、真正死因、系统性失职全揭露。' },
+  { id:'safety', ico:'🛡️', title:'安全警示教育', tone:'#3fb950', tno:'教育',
+    brief:'海恩法则、《安全生产法》与系统性反思。' }
+];
+
+/* =========================================================
+   四、常量与工具
+   ========================================================= */
+const HOST_PASSWORD = 'jtaqb26';
+const PEER_PREFIX = 'weilou-mystery-v1-';
+const LS_HOST_ROOM = 'weilou_host_room';
+const LS_PLAYER_ROOM = 'weilou_player_room';
+const LS_PLAYER_NAME = 'weilou_player_name';
+const LS_DEPLOY_URL = 'weilou_deploy_url';
+const LS_ROLE_KEY = (code, name) => 'weilou_role_' + code + '_' + name;
+
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+function esc(str){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function genCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = '';
+  for(let i=0;i<6;i++) s += chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+function roleById(id){ return ROLES.find(r => r.id === id) || null; }
+
+function openModal(html){
+  $('#modalContent').innerHTML = html;
+  $('#modalMask').classList.add('show');
+  $('.modal').scrollTop = 0;
+}
+function closeModal(){ $('#modalMask').classList.remove('show'); }
+
+/* 判断当前是否处于本地/内网环境（微信扫码无法访问） */
+function isLocalEnv(){
+  try{
+    if(location.protocol === 'file:') return true;
+    var h = location.hostname;
+    if(!h) return true;
+    if(h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0') return true;
+    if(/^192\.168\./.test(h)) return true;
+    if(/^10\./.test(h)) return true;
+    if(/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(h)) return true;
+    return false;
+  }catch(e){
+    return true;
+  }
+}
+
+/* 获取当前页面基础地址 */
+function getBaseUrl(){
+  return location.origin + location.pathname;
+}
+
+/* 规范化用户输入的部署地址 */
+function normalizeUrl(url){
+  url = (url || '').trim();
+  if(!url) return '';
+  if(!/^https?:\/\//i.test(url)){
+    url = 'https://' + url;
+  }
+  /* 去掉尾部的 ?xxx#xxx，只保留路径 */
+  url = url.replace(/[?#].*$/, '');
+  return url;
+}
+
+/* =========================================================
+   五、主持人状态
+   ========================================================= */
+const H = {
+  roomCode:'', peer:null, conns:{}, players:{},
+  clueRound:1, voteStarted:false, votes:{}, manualEvidence:{}
+};
+
+const P = {
+  peer:null, conn:null, peerId:'', name:'', roomCode:'',
+  slot:null, roleId:null,
+  revealed:[], myEvidence:[], publicEvidence:[],
+  clueRound:1, voteStarted:false, myVote:null,
+  allPlayers:[], takenRoleIds:[]
+};
+
+/* =========================================================
+   六、密码验证
+   ========================================================= */
+function openPwdModal(onSuccess){
+  const overlay = $('#pwdOverlay');
+  const input = $('#inpHostPwd');
+  const err = $('#pwdError');
+  input.value = '';
+  err.textContent = '';
+  overlay.classList.add('show');
+  setTimeout(() => input.focus(), 100);
+
+  const cleanup = () => {
+    $('#btnPwdConfirm').removeEventListener('click', handleConfirm);
+    $('#btnPwdCancel').removeEventListener('click', handleCancel);
+    input.removeEventListener('keydown', handleKey);
+  };
+
+  const handleConfirm = () => {
+    const pwd = input.value.trim();
+    if(pwd !== HOST_PASSWORD){
+      err.textContent = '❌ 密码错误，请重新输入。';
+      input.value = '';
+      input.focus();
+      return;
+    }
+    cleanup();
+    overlay.classList.remove('show');
+    onSuccess();
+  };
+  const handleCancel = () => {
+    cleanup();
+    overlay.classList.remove('show');
+  };
+  const handleKey = (e) => {
+    if(e.key === 'Enter') handleConfirm();
+    else if(e.key === 'Escape') handleCancel();
+  };
+
+  $('#btnPwdConfirm').addEventListener('click', handleConfirm);
+  $('#btnPwdCancel').addEventListener('click', handleCancel);
+  input.addEventListener('keydown', handleKey);
+}
+
+/* =========================================================
+   七、二维码生成（M 级纠错，微信扫码友好）
+   ========================================================= */
+function showQRModal(){
+  const local = isLocalEnv();
+  const savedDeploy = (() => {
+    try{ return localStorage.getItem(LS_DEPLOY_URL) || ''; }catch(e){ return ''; }
+  })();
+
+  const autoUrl = getBaseUrl();
+  const initialUrl = savedDeploy || autoUrl;
+
+  openModal(`
+    <h2>📱 邀请二维码</h2>
+    <div class="sub">房间码 <b style="color:#ffc247;letter-spacing:3px">${esc(H.roomCode)}</b> · 支持微信扫码</div>
+
+    ${local ? `
+      <div class="qr-warn">
+        ⚠️ <b>检测到当前为本地地址</b>（${esc(location.protocol)}//${esc(location.hostname || '本地文件')}），
+        微信无法直接扫码访问。<br>
+        请先将此页面部署到<b>公网服务器</b>（如 GitHub Pages、阿里云 OSS、腾讯云 COS、Vercel 等），
+        然后在下方填入部署后的公网地址（例如：<code>https://your-site.com/weilou.html</code>）。
+      </div>
+    ` : `
+      <div class="block" style="background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.3);border-radius:10px;padding:12px 14px">
+        <p style="font-size:13px;color:#7ee787;margin:0">
+          ✅ 当前地址为公网地址，微信扫码可直接访问。
+        </p>
+      </div>
+    `}
+
+    <div class="block">
+      <div class="bt">部署地址（微信扫码用）</div>
+      <input type="text" class="deploy-input" id="inpDeployUrl"
+             value="${esc(initialUrl)}"
+             placeholder="https://your-site.com/weilou.html">
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn" id="btnRegenQR" style="flex:1">🔄 用此地址重新生成二维码</button>
+      </div>
+      <p style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.65">
+        💡 该地址会被保存到本机，下次打开二维码弹窗时自动带出，不用重复输入。
+      </p>
+    </div>
+
+    <div class="qr-grid" id="qrGrid">
+      <div class="qr-block">
+        <div class="qr-title">① 游戏首页</div>
+        <div class="qr-holder" id="qrHomeHolder"></div>
+        <div class="qr-desc">
+          扫描后进入游戏首页<br>
+          玩家可自行选择"主持人"或"玩家"入口
+        </div>
+      </div>
+
+      <div class="qr-block">
+        <div class="qr-title">② 快速加入房间</div>
+        <div class="qr-holder" id="qrJoinHolder"></div>
+        <div class="qr-desc">
+          扫描后进入"加入房间"界面<br>
+          房间码自动填入 <b>${esc(H.roomCode)}</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="qr-tips">
+      💡 <b>微信扫码提示：</b><br>
+      · 微信扫一扫直接识别 URL 二维码并打开；<br>
+      · 若提示"已停止访问该网页"，说明域名被微信拦截，请更换域名或使用其他部署服务；<br>
+      · 建议使用 HTTPS 地址，微信内打开更顺畅。
+    </div>
+
+    <div class="btn-row" style="margin-top:18px">
+      <button class="btn ghost" id="btnCopyJoinUrl">复制快速加入链接</button>
+      <button class="btn ghost" id="btnCopyBaseUrl">复制首页链接</button>
+    </div>
+  `);
+
+  /* 立即用初始地址渲染二维码 */
+  renderQRPair(initialUrl);
+
+  /* 重新生成 */
+  const btnRegen = document.getElementById('btnRegenQR');
+  if(btnRegen){
+    btnRegen.addEventListener('click', () => {
+      const raw = document.getElementById('inpDeployUrl').value;
+      const url = normalizeUrl(raw);
+      if(!url){
+        alert('请输入部署地址（例如：https://your-site.com/weilou.html）');
+        return;
+      }
+      document.getElementById('inpDeployUrl').value = url;
+      try{ localStorage.setItem(LS_DEPLOY_URL, url); }catch(e){}
+      renderQRPair(url);
+    });
+  }
+
+  /* 输入框回车也能重新生成 */
+  const inpDeploy = document.getElementById('inpDeployUrl');
+  if(inpDeploy){
+    inpDeploy.addEventListener('keydown', e => {
+      if(e.key === 'Enter') document.getElementById('btnRegenQR').click();
+    });
+  }
+
+  /* 复制链接 */
+  const btnJoin = document.getElementById('btnCopyJoinUrl');
+  if(btnJoin){
+    btnJoin.addEventListener('click', () => {
+      const url = normalizeUrl(document.getElementById('inpDeployUrl').value) || getBaseUrl();
+      const joinUrl = url + '?join=' + encodeURIComponent(H.roomCode);
+      copyToClipboard(joinUrl, btnJoin, '复制快速加入链接');
+    });
+  }
+  const btnBase = document.getElementById('btnCopyBaseUrl');
+  if(btnBase){
+    btnBase.addEventListener('click', () => {
+      const url = normalizeUrl(document.getElementById('inpDeployUrl').value) || getBaseUrl();
+      copyToClipboard(url, btnBase, '复制首页链接');
+    });
+  }
+}
+
+/* 通用复制到剪贴板 */
+function copyToClipboard(text, btn, originalLabel){
+  const done = () => {
+    if(btn){
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => btn.textContent = originalLabel, 1600);
+    }
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(() => {
+      prompt('请手动复制链接：', text);
+    });
+  }else{
+    prompt('请手动复制链接：', text);
+  }
+}
+
+/* 渲染两个二维码（首页 + 快速加入） */
+function renderQRPair(baseUrl){
+  const joinUrl = baseUrl + '?join=' + encodeURIComponent(H.roomCode);
+
+  const qrHomeEl = document.getElementById('qrHomeHolder');
+  const qrJoinEl = document.getElementById('qrJoinHolder');
+
+  /* 首页二维码 */
+  if(qrHomeEl){
+    try{
+      QRLite.render(qrHomeEl, baseUrl, { size: 220 });
+    }catch(err){
+      console.error('首页二维码生成失败：', err);
+      qrHomeEl.innerHTML = `
+        <div class="qr-fallback">
+          ⚠ 二维码生成失败<br>
+          <b>${esc(baseUrl)}</b>
+        </div>
+      `;
+    }
+  }
+
+  /* 快速加入二维码 */
+  if(qrJoinEl){
+    try{
+      QRLite.render(qrJoinEl, joinUrl, { size: 220 });
+    }catch(err){
+      console.error('快速加入二维码生成失败：', err);
+      qrJoinEl.innerHTML = `
+        <div class="qr-fallback">
+          ⚠ 二维码生成失败<br>
+          房间码 <b>${esc(H.roomCode)}</b>
+          <span style="font-size:10.5px;word-break:break-all;display:block;margin-top:6px">${esc(joinUrl)}</span>
+        </div>
+      `;
+    }
+  }
+}
+
+/* =========================================================
+   八、初始化主持人状态
+   ========================================================= */
+function initHostState(code, peer){
+  H.roomCode = code;
+  H.peer = peer;
+  H.conns = {};
+  H.players = {};
+  H.clueRound = 1;
+  H.voteStarted = false;
+  H.votes = {};
+  H.manualEvidence = {};
+
+  try{ localStorage.setItem(LS_HOST_ROOM, code); }catch(e){}
+
+  $('#hostRoomCode').textContent = code;
+  $('#screen-home').classList.add('hidden');
+  $('#screen-host').classList.remove('hidden');
+
+  renderHostActs();
+  renderHostClues();
+  renderHostRoles();
+  renderHostFinale();
+  renderHostRoom();
+  updateHostStatus();
+}
+
+function bindHostPeerEvents(peer){
+  peer.on('connection', conn => {
+    conn.on('open', () => {
+      H.conns[conn.peer] = conn;
+      conn.on('data', data => handlePlayerMessage(conn.peer, data));
+      conn.on('close', () => handlePlayerDisconnect(conn.peer));
+    });
+  });
+}
+
+/* =========================================================
+   九、创建房间 / 返回上次房间
+   ========================================================= */
+function createRoom(){
+  openPwdModal(() => {
+    const code = genCode();
+    const btn = $('#btnCreateRoom');
+    btn.disabled = true;
+    btn.textContent = '创建中…';
+
+    const peer = new Peer(PEER_PREFIX + code, { debug:1 });
+
+    peer.on('open', () => {
+      initHostState(code, peer);
+      bindHostPeerEvents(peer);
+      btn.disabled = false;
+      btn.textContent = '创建房间';
+    });
+
+    peer.on('error', err => {
+      console.error(err);
+      alert('创建房间失败：' + (err.type || err.message || '未知错误') + '\n请检查网络后重试。');
+      btn.disabled = false;
+      btn.textContent = '创建房间';
+    });
+  });
+}
+
+function returnToLastRoom(){
+  const code = (localStorage.getItem(LS_HOST_ROOM) || '').trim();
+  if(!code){
+    alert('没有找到上次创建的房间记录。\n请先创建一次房间。');
+    return;
+  }
+  if(!confirm(`确定要返回上次创建的房间「${code}」吗？\n\n注意：房间内玩家需要重新加入，游戏进度（证据解锁、投票）将重新开始。`)) return;
+
+  const btn = $('#btnReturnRoom');
+  btn.disabled = true;
+  btn.textContent = '连接中…';
+
+  let retries = 0;
+  const maxRetries = 6;
+
+  const tryConnect = () => {
+    const peer = new Peer(PEER_PREFIX + code, { debug:1 });
+    let opened = false;
+
+    peer.on('open', () => {
+      opened = true;
+      initHostState(code, peer);
+      bindHostPeerEvents(peer);
+      btn.disabled = false;
+      btn.textContent = '返回上次创建的房间';
+    });
+
+    peer.on('error', err => {
+      if(opened) return;
+      if(err.type === 'unavailable-id' && retries < maxRetries){
+        retries++;
+        btn.textContent = `房间码被占用，重试中 (${retries}/${maxRetries})…`;
+        try{ peer.destroy(); }catch(e){}
+        setTimeout(tryConnect, 2500);
+      }else{
+        alert('无法返回房间：' + (err.type || err.message || '未知错误') + '\n\n房间可能已被占用，或网络异常。');
+        btn.disabled = false;
+        btn.textContent = '返回上次创建的房间';
+      }
+    });
+  };
+
+  tryConnect();
+}
+
+/* =========================================================
+   十、玩家加入
+   ========================================================= */
+function joinRoom(){
+  const code = ($('#inpRoomCode').value || '').trim().toUpperCase();
+  const name = ($('#inpPlayerName').value || '').trim();
+
+  if(code.length !== 6){ alert('请输入 6 位房间码'); return; }
+  if(!name){ alert('请输入你的名字'); return; }
+
+  $('#btnJoinRoom').disabled = true;
+  $('#btnJoinRoom').textContent = '连接中…';
+
+  const savedRoleId = (() => {
+    try{ return localStorage.getItem(LS_ROLE_KEY(code, name)); }catch(e){ return null; }
+  })();
+
+  const peer = new Peer({ debug:1 });
+
+  peer.on('open', id => {
+    P.peerId = id;
+    P.name = name;
+    P.roomCode = code;
+    P.peer = peer;
+
+    const conn = peer.connect(PEER_PREFIX + code, { reliable:true });
+
+    const timeout = setTimeout(() => {
+      if(!P.conn || !P.conn.open){
+        alert('连接超时。请确认房间码是否正确，以及主持人是否在线。');
+        resetJoinBtn();
+        try{ peer.destroy(); }catch(e){}
+      }
+    }, 12000);
+
+    conn.on('open', () => {
+      clearTimeout(timeout);
+      P.conn = conn;
+      P.conn.on('data', data => handleHostMessage(data));
+      conn.send({ t:'join', name: name, savedRoleId: savedRoleId });
+
+      try{
+        localStorage.setItem(LS_PLAYER_ROOM, code);
+        localStorage.setItem(LS_PLAYER_NAME, name);
+      }catch(e){}
+
+      $('#playerRoomCode').textContent = code;
+      $('#playerNameSub').textContent = '玩家 · ' + name;
+      $('#screen-home').classList.add('hidden');
+      $('#screen-player').classList.remove('hidden');
+      $('#playerConnHint').textContent = '已连接';
+      $('#playerConnHint').style.color = '';
+    });
+
+    conn.on('error', err => {
+      clearTimeout(timeout);
+      console.error(err);
+      alert('连接失败：' + (err.message || '未知错误'));
+      resetJoinBtn();
+    });
+
+    conn.on('close', () => {
+      $('#playerConnHint').textContent = '⚠ 与主持人断开连接';
+      $('#playerConnHint').style.color = '#ff8a8d';
+    });
+  });
+
+  peer.on('error', err => {
+    console.error(err);
+    alert('无法连接：' + (err.type || err.message || '未知错误') + '\n请检查房间码。');
+    resetJoinBtn();
+  });
+}
+
+function resetJoinBtn(){
+  $('#btnJoinRoom').disabled = false;
+  $('#btnJoinRoom').textContent = '加入房间';
+}
+
+/* =========================================================
+   十一、主持人：处理玩家消息
+   ========================================================= */
+function handlePlayerMessage(peerId, msg){
+  if(!msg || !msg.t) return;
+
+  if(msg.t === 'join'){
+    const pname = String(msg.name || '玩家').slice(0,12);
+
+    const existingPid = Object.keys(H.players).find(
+      pid => pid !== peerId && H.players[pid].name === pname
+    );
+
+    if(existingPid){
+      const old = H.players[existingPid];
+      delete H.players[existingPid];
+      H.players[peerId] = old;
+      old.connected = true;
+      old.name = pname;
+
+      if(H.conns[existingPid]){
+        try{ H.conns[existingPid].close(); }catch(e){}
+        delete H.conns[existingPid];
+      }
+    }else{
+      if(!H.players[peerId]){
+        H.players[peerId] = { name: pname, slot: null, roleId: null, revealed: [], connected: true };
+      }else{
+        H.players[peerId].name = pname;
+        H.players[peerId].connected = true;
+      }
+    }
+
+    const p = H.players[peerId];
+    if(!p.roleId && msg.savedRoleId && roleById(msg.savedRoleId)){
+      const taken = Object.values(H.players)
+        .filter(x => x !== p)
+        .map(x => x.roleId)
+        .filter(Boolean);
+      if(!taken.includes(msg.savedRoleId)){
+        p.roleId = msg.savedRoleId;
+        p.slot = ROLES.findIndex(r => r.id === msg.savedRoleId);
+      }
+    }
+
+    broadcastSync();
+    renderHostRoom();
+    renderHostClues();
+    renderHostRoles();
+    updateHostStatus();
+    return;
+  }
+
+  if(!H.players[peerId]){
+    H.players[peerId] = { name:'玩家', slot:null, roleId:null, revealed:[], connected:true };
+  }
+  const p = H.players[peerId];
+
+  if(msg.t === 'drawRole'){
+    if(p.roleId){
+      sendTo(peerId, buildPlayerSync(peerId));
+      return;
+    }
+    const taken = Object.values(H.players).map(x => x.roleId).filter(Boolean);
+    const pool = ROLES.filter(r => !taken.includes(r.id));
+    if(!pool.length){
+      sendTo(peerId, { t:'toast', text:'所有角色都已被抽取完毕。' });
+      return;
+    }
+    const role = pool[Math.floor(Math.random()*pool.length)];
+    p.roleId = role.id;
+    p.slot = ROLES.findIndex(r => r.id === role.id);
+    broadcastSync();
+    renderHostRoom();
+    renderHostClues();
+    renderHostRoles();
+    updateHostStatus();
+    return;
+  }
+
+  if(msg.t === 'revealEvidence'){
+    const idx = Number(msg.idx);
+    if(!Number.isInteger(idx) || !CLUES[idx]) return;
+    const owner = effectiveOwner(idx);
+    if(owner !== p.roleId) return;
+    if(!p.revealed.includes(idx)) p.revealed.push(idx);
+    broadcastSync();
+    renderHostRoom();
+    return;
+  }
+
+  if(msg.t === 'unrevealEvidence'){
+    const idx = Number(msg.idx);
+    p.revealed = p.revealed.filter(x => x !== idx);
+    broadcastSync();
+    renderHostRoom();
+    return;
+  }
+
+  if(msg.t === 'vote'){
+    if(!H.voteStarted) return;
+    const target = String(msg.target || '');
+    if(!target || !roleById(target)) return;
+    H.votes[peerId] = target;
+    broadcastSync();
+    renderHostRoom();
+    return;
+  }
+}
+
+function handlePlayerDisconnect(peerId){
+  if(H.players[peerId]){
+    H.players[peerId].connected = false;
+  }
+  delete H.conns[peerId];
+  broadcastSync();
+  renderHostRoom();
+  updateHostStatus();
+}
+
+function sendTo(peerId, obj){
+  const conn = H.conns[peerId];
+  if(conn && conn.open){
+    try{ conn.send(obj); }catch(e){ console.error(e); }
+  }
+}
+
+function broadcastSync(){
+  Object.keys(H.conns).forEach(pid => {
+    sendTo(pid, buildPlayerSync(pid));
+  });
+  renderHostRoom();
+  updateHostStatus();
+}
+
+function effectiveOwner(clueIdx){
+  if(H.manualEvidence[clueIdx] !== undefined) return H.manualEvidence[clueIdx];
+  return CLUES[clueIdx].ownerId || 'public';
+}
+
+function buildPlayerSync(peerId){
+  const p = H.players[peerId] || { name:'', slot:null, roleId:null, revealed:[] };
+
+  const myEvidence = [];
+  CLUES.forEach((c, i) => {
+    const owner = effectiveOwner(i);
+    if(owner === 'public') myEvidence.push(i);
+    else if(p.roleId && owner === p.roleId) myEvidence.push(i);
+  });
+
+  const revealedSet = new Set();
+  Object.values(H.players).forEach(pl => {
+    (pl.revealed || []).forEach(i => revealedSet.add(i));
+  });
+
+  const participants = Object.entries(H.players)
+    .filter(([id, pl]) => pl.roleId)
+    .map(([id, pl]) => ({
+      peerId:id,
+      playerName: pl.name,
+      roleId: pl.roleId,
+      roleName: (roleById(pl.roleId) || {}).name || pl.roleId
+    }));
+
+  return {
+    t:'sync',
+    you:{
+      peerId: peerId,
+      name: p.name,
+      slot: p.slot,
+      roleId: p.roleId,
+      revealed: p.revealed || []
+    },
+    myEvidence: myEvidence,
+    publicEvidence: Array.from(revealedSet),
+    clueRound: H.clueRound,
+    voteStarted: H.voteStarted,
+    myVote: H.votes[peerId] || null,
+    participants: participants,
+    takenRoleIds: Object.values(H.players).map(x => x.roleId).filter(Boolean)
+  };
+}
+
+/* =========================================================
+   十二、玩家：处理主持人消息
+   ========================================================= */
+function handleHostMessage(msg){
+  if(!msg || !msg.t) return;
+
+  if(msg.t === 'toast'){
+    alert(msg.text);
+    return;
+  }
+
+  if(msg.t === 'sync'){
+    P.slot = msg.you.slot;
+    P.roleId = msg.you.roleId;
+    P.revealed = msg.you.revealed || [];
+    P.myEvidence = msg.myEvidence || [];
+    P.publicEvidence = msg.publicEvidence || [];
+    P.clueRound = msg.clueRound;
+    P.voteStarted = msg.voteStarted;
+    P.myVote = msg.myVote;
+    P.allPlayers = msg.participants || [];
+    P.takenRoleIds = msg.takenRoleIds || [];
+
+    if(P.roleId && P.roomCode && P.name){
+      try{ localStorage.setItem(LS_ROLE_KEY(P.roomCode, P.name), P.roleId); }catch(e){}
+    }
+
+    renderPlayerAll();
+  }
+}
+
+/* =========================================================
+   十三、主持人渲染
+   ========================================================= */
+function updateHostStatus(){
+  const total = Object.keys(H.players).length;
+  const assigned = Object.values(H.players).filter(p => p.roleId).length;
+  $('#hostPlayerPill').textContent = `玩家 ${total} / 10 · 已分配角色 ${assigned}`;
+  const vp = $('#hostVotePill');
+  if(H.voteStarted){
+    const voted = Object.keys(H.votes).length;
+    vp.textContent = `投票进行中 · ${voted} 人已投`;
+    vp.className = 'pill red';
+  }else{
+    vp.textContent = '投票未开始';
+    vp.className = 'pill';
+  }
+}
+
+function renderHostActs(){
+  const colors = ['#ff8a00','#e5484d','#b45cf0','#3fb950','#2aa198','#7aa2f7'];
+  $('#hostActGrid').innerHTML = ACTS.map((a, i) => {
+    const color = colors[i % colors.length];
+    return `
+      <button class="tile" data-act="${i}" style="--tc:${color}">
+        <div class="tno">第 ${i+1} 幕</div>
+        <h3>${esc(a.title)}</h3>
+        <div class="tm">${esc(a.dur)}</div>
+        <div class="tdesc">${esc(a.scene)}</div>
+        <div class="tfoot">
+          <span class="badge">点击查看</span>
+          <span class="go">剧本 + 提示 →</span>
+        </div>
+      </button>
+    `;
+  }).join('');
+
+  $$('#hostActGrid .tile').forEach(el => {
+    el.addEventListener('click', () => openActModal(Number(el.dataset.act)));
+  });
+}
+
+function openActModal(i){
+  const a = ACTS[i];
+  openModal(`
+    <h2>第 ${i+1} 幕 · ${esc(a.title)}</h2>
+    <div class="sub">${esc(a.dur)}</div>
+    <div class="scene">${esc(a.scene)}</div>
+    <div class="block">
+      <div class="bt">剧 本</div>
+      <div class="script">${a.script}</div>
+    </div>
+    <div class="block">
+      <div class="bt">主持人提示</div>
+      <ul class="tips">${a.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+    </div>
+  `);
+}
+
+function renderHostClues(){
+  const labels = ['', ROUND_INFO[1].label, ROUND_INFO[2].label, ROUND_INFO[3].label];
+  const hints  = ['','已解锁 10 条基础证据','已解锁 5 条关键证据','已解锁全部 18 条证据'];
+  $('#hostRoundLabel').textContent = `当前进度：${labels[H.clueRound]}`;
+  $('#hostRoundHint').textContent = hints[H.clueRound];
+  const btn = $('#btnNextRound');
+  btn.disabled = H.clueRound >= 3;
+  btn.textContent = H.clueRound >= 3 ? '已全部解锁' : '解锁下一轮证据 →';
+
+  const roundColor = {1:'#ff8a00', 2:'#e5484d', 3:'#b45cf0'};
+  $('#hostClueGrid').innerHTML = CLUES.map((c, i) => {
+    const locked = c.round > H.clueRound;
+    const ownerId = effectiveOwner(i);
+    const ownerRole = ownerId === 'public' ? null : roleById(ownerId);
+    const ownerName = ownerRole ? ownerRole.name : '所有人可见';
+    const ownerPlayer = Object.entries(H.players).find(([id, pl]) => pl.roleId === ownerId);
+    const ownerPlayerName = ownerPlayer ? ownerPlayer[1].name : '';
+    const isRevealed = Object.values(H.players).some(pl => (pl.revealed||[]).includes(i));
+
+    return `
+      <button class="tile ${locked ? 'locked' : ''}" data-clue="${i}" style="--tc:${roundColor[c.round]}">
+        <div class="tno">${locked ? '🔒 未解锁' : '第 ' + c.round + ' 轮'}</div>
+        <span class="ticon">${locked ? '🔒' : c.ico}</span>
+        <h3>${esc(c.title)}</h3>
+        <div class="tm">归属：${esc(ownerName)}${ownerPlayerName ? ' · ' + esc(ownerPlayerName) : ''}</div>
+        <div class="tfoot">
+          <span class="badge ${isRevealed ? 'green' : ''}">${isRevealed ? '已公开' : (locked ? '查看解锁条件' : '点击查看')}</span>
+          <span class="go">${locked ? '需要推进 →' : '详情 →'}</span>
+        </div>
+      </button>
+    `;
+  }).join('');
+
+  $$('#hostClueGrid .tile').forEach(el => {
+    el.addEventListener('click', () => {
+      const i = Number(el.dataset.clue);
+      const c = CLUES[i];
+      if(c.round > H.clueRound){ openLockedInfo(i); return; }
+      openHostClue(i);
+    });
+  });
+}
+
+function openLockedInfo(i){
+  const c = CLUES[i];
+  const info = ROUND_INFO[c.round];
+  const cur  = ROUND_INFO[H.clueRound];
+  const needMore = c.round - H.clueRound;
+  const stepHtml = [1,2,3].map(r => {
+    const isNow = r === H.clueRound;
+    const isLocked = r > H.clueRound;
+    const cls = isNow ? 'now' : (isLocked ? 'locked' : '');
+    return `<span class="lock-step ${cls}"><span class="dot"></span>第${r}轮</span>`;
+  }).join('<span style="color:#3a434f">→</span>');
+
+  openModal(`
+    <h2 style="color:#b8c0cc">🔒 证据尚未解锁</h2>
+    <div class="sub">${esc(c.ico)} ${esc(c.title)} · ${esc(c.holder)}</div>
+    <div class="lock-box">
+      <h3>解锁条件</h3>
+      <p><strong>该证据所属：</strong>${esc(info.label)}</p>
+      <p><strong>当前进度：</strong>${esc(cur.label)}</p>
+      <p><strong>建议解锁时机：</strong>${esc(info.act)}</p>
+      <p style="margin-bottom:4px"><strong>还差：</strong>再推进 ${needMore} 轮</p>
+      <div class="lock-path">${stepHtml}</div>
+    </div>
+    <div class="block">
+      <div class="bt">操作方式</div>
+      <p style="font-size:14px;color:#c7ccd4;line-height:1.9">
+        在「证据中心」顶部点击
+        <span style="color:#ffc247;font-weight:700">「解锁下一轮证据 →」</span>
+        按钮，推进到 <span style="color:#ffc247;font-weight:700">${esc(info.label)}</span> 后，本证据即可点击查看。
+      </p>
+    </div>
+  `);
+}
+
+function openHostClue(i){
+  const c = CLUES[i];
+  const ownerId = effectiveOwner(i);
+  const ownerRole = ownerId === 'public' ? null : roleById(ownerId);
+  const ownerName = ownerRole ? ownerRole.name : '所有人可见';
+
+  const revealList = Object.entries(H.players)
+    .filter(([id, pl]) => (pl.revealed||[]).includes(i))
+    .map(([id, pl]) => pl.name || '玩家');
+
+  openModal(`
+    <h2>${esc(c.ico)} ${esc(c.title)}</h2>
+    <div class="sub">持有/来源：${esc(c.holder)} · 第 ${c.round} 轮证据</div>
+
+    <div class="block">
+      <div class="bt">归属信息</div>
+      <div class="vote-card-mini" style="margin-bottom:0">
+        <span class="nm">当前归属</span>
+        <span class="tagv">${esc(ownerName)}</span>
+        <div style="margin-left:auto">
+          <button class="btn ghost small" id="btnReassignClue" data-idx="${i}">重新分配</button>
+        </div>
+      </div>
+      ${revealList.length ? `<p style="font-size:12.5px;color:#7ee787;margin-top:10px">✅ 已公开给所有人：${esc(revealList.join('、'))}（隐藏线索未公开）</p>` : `<p style="font-size:12.5px;color:var(--muted);margin-top:10px">未公开</p>`}
+    </div>
+
+    <div class="block">
+      <div class="bt">证据内容</div>
+      <div class="evi-desc">${esc(c.desc)}</div>
+    </div>
+
+    <div class="reveal-wrap" id="revealWrap">
+      <button class="reveal-btn" id="revealBtn">
+        <span class="arr">▶</span>
+        <span id="revealLabel">点击显示隐藏线索 / 主持人视角</span>
+      </button>
+      <div class="reveal-body">
+        <div class="secret-box">
+          <div class="sh">⚠ 隐藏线索 · 仅主持人可见（玩家公开时不会共享）</div>
+          <ul>${c.hidden.map(h => `<li>${esc(h)}</li>`).join('')}</ul>
+        </div>
+      </div>
+    </div>
+  `);
+
+  $('#revealBtn').addEventListener('click', () => {
+    const w = $('#revealWrap');
+    w.classList.toggle('open');
+    const opened = w.classList.contains('open');
+    $('#revealLabel').textContent = opened ? '收起隐藏线索' : '点击显示隐藏线索 / 主持人视角';
+  });
+
+  $('#btnReassignClue').addEventListener('click', () => openReassignModal(i));
+}
+
+function openReassignModal(idx){
+  const c = CLUES[idx];
+  const cur = effectiveOwner(idx);
+  const options = [
+    { id:'public', name:'所有人可见（公共）' },
+    ...ROLES.map(r => {
+      const ownerPlayer = Object.entries(H.players).find(([id, pl]) => pl.roleId === r.id);
+      const pn = ownerPlayer ? ownerPlayer[1].name : '';
+      return { id:r.id, name: r.name + (pn ? '（' + pn + '）' : '') };
+    })
+  ];
+
+  openModal(`
+    <h2>重新分配证据</h2>
+    <div class="sub">${esc(c.ico)} ${esc(c.title)}</div>
+    <div class="block">
+      <div class="bt">选择新的归属角色</div>
+      <div class="vote-list" id="reassignList">
+        ${options.map(o => `
+          <button class="vote-item ${o.id === cur ? 'sel' : ''}" data-owner="${o.id}">
+            <h4>${esc(o.name)}</h4>
+            <div class="m">${o.id === 'public' ? '所有玩家可见' : '仅该角色可见'}</div>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+    <div class="block" style="background:rgba(255,138,0,.06);border:1px solid rgba(255,138,0,.25);border-radius:10px;padding:12px 14px;margin-bottom:0">
+      <p style="font-size:13px;color:#ffc247;margin:0">💡 修改归属后，系统会自动把该证据重新分配给目标角色的玩家账号。</p>
+    </div>
+  `);
+
+  $$('#reassignList .vote-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const newOwner = el.dataset.owner;
+      H.manualEvidence[idx] = newOwner;
+      closeModal();
+      broadcastSync();
+      renderHostClues();
+    });
+  });
+}
+
+function renderHostRoles(){
+  $('#hostRoleGrid').innerHTML = ROLES.map(r => {
+    const ownerPlayer = Object.entries(H.players).find(([id, pl]) => pl.roleId === r.id);
+    const pn = ownerPlayer ? ownerPlayer[1].name : '未分配';
+    return `
+      <div class="role-tile" data-role="${r.id}" style="--rc:${r.tone}">
+        <h3 style="color:${r.tone}">${esc(r.name)}</h3>
+        <div class="m">${esc(r.meta)} · 玩家：${esc(pn)}</div>
+        <div class="b">${esc(r.brief)}</div>
+      </div>
+    `;
+  }).join('');
+
+  $$('#hostRoleGrid .role-tile').forEach(el => {
+    el.addEventListener('click', () => openRoleModal(el.dataset.role));
+  });
+}
+
+function openRoleModal(roleId){
+  const r = roleById(roleId);
+  if(!r) return;
+  openModal(`
+    <h2 style="color:${r.tone}">${esc(r.name)}</h2>
+    <div class="sub">${esc(r.meta)}</div>
+
+    <div class="block">
+      <div class="bt">背 景</div>
+      <p style="font-size:14px;color:#c7ccd4;line-height:1.85">${esc(r.background)}</p>
+    </div>
+
+    <div class="block">
+      <div class="bt">时间线</div>
+      <div class="role-block" style="margin-bottom:0">
+        <ul>${r.timeline.map(s => `<li>${esc(s)}</li>`).join('')}</ul>
+      </div>
+    </div>
+
+    <div class="reveal-wrap" id="roleReveal">
+      <button class="reveal-btn warm" id="roleRevealBtn">
+        <span class="arr">▶</span>
+        <span id="roleRevealLabel">点击显示秘密与目标</span>
+      </button>
+      <div class="reveal-body">
+        <div class="role-block">
+          <div class="rbt">⚠ 秘密</div>
+          <ul>${r.secrets.map(s => `<li>${esc(s)}</li>`).join('')}</ul>
+        </div>
+        <div class="role-block">
+          <div class="rbt">目标</div>
+          <p>${esc(r.goal)}</p>
+        </div>
+      </div>
+    </div>
+  `);
+
+  $('#roleRevealBtn').addEventListener('click', () => {
+    const w = $('#roleReveal');
+    w.classList.toggle('open');
+    const opened = w.classList.contains('open');
+    $('#roleRevealLabel').textContent = opened ? '收起秘密与目标' : '点击显示秘密与目标';
+  });
+}
+
+function renderHostFinale(){
+  $('#hostEndingGrid').innerHTML = FINALE.map(f => `
+    <button class="tile" data-finale="${f.id}" style="--tc:${f.tone}">
+      <div class="tno">${esc(f.tno)}</div>
+      <span class="ticon">${f.ico}</span>
+      <h3>${esc(f.title)}</h3>
+      <div class="tdesc">${esc(f.brief)}</div>
+      <div class="tfoot">
+        <span class="badge">点击查看</span>
+        <span class="go">详情 →</span>
+      </div>
+    </button>
+  `).join('');
+
+  $$('#hostEndingGrid .tile').forEach(el => {
+    el.addEventListener('click', () => openFinale(el.dataset.finale));
+  });
+}
+
+function openFinale(id){
+  if(id === 'endA' || id === 'endB' || id === 'endC'){
+    const key = id.slice(-1);
+    const en = ENDINGS[key];
+    const color = key === 'A' ? '#e5484d' : key === 'B' ? '#ff8a00' : '#b45cf0';
+    openModal(`
+      <h2 style="color:${color}">${esc(en.title)}</h2>
+      <div class="sub">终局抉择 · 匿名投票选项</div>
+      <div class="truth-box" style="border-color:${color}55;background:linear-gradient(160deg,${color}15,${color}05)">
+        <p style="white-space:pre-wrap">${esc(en.text)}</p>
+      </div>
+      <div class="block" style="background:rgba(255,138,0,.06);border:1px solid rgba(255,138,0,.25);border-radius:10px;padding:12px 14px;margin-top:6px">
+        <p style="font-size:13px;color:#ffc247;margin:0">💡 主持人提示：无论玩家选择哪个结局，最后都应展示"安全警示教育"卡片，把讨论从"找凶手"引向"反思系统性失守"。</p>
+      </div>
+    `);
+    return;
+  }
+  if(id === 'truth'){
+    openModal(`
+      <h2 style="color:#ff8a8d">🔍 最终真相</h2>
+      <div class="sub">建议在玩家完成指认后揭示</div>
+      <div class="truth-box">
+        <h3>直接行凶者</h3>
+        <p><strong>${esc(TRUTH.killer)}</strong></p>
+        <h3 style="margin-top:14px">动机</h3>
+        <p>${esc(TRUTH.motive)}</p>
+        <h3 style="margin-top:14px">手法</h3>
+        <p>${esc(TRUTH.method)}</p>
+        <h3 style="margin-top:14px">真正死因</h3>
+        <p>${esc(TRUTH.deathCause)}</p>
+        <h3 style="margin-top:14px">停电原因</h3>
+        <p>${esc(TRUTH.blackout)}</p>
+        <h3 style="margin-top:14px">破案核心证据链</h3>
+        <p>${esc(TRUTH.evidenceChain)}</p>
+      </div>
+      <div class="truth-box" style="border-color:rgba(255,138,0,.34)">
+        <h3 style="color:#ffc247">关键帮凶 / 掩盖者</h3>
+        ${TRUTH.helpers.map(([n,d]) => `<p><strong>${esc(n)}：</strong>${esc(d)}</p>`).join('')}
+      </div>
+      <div class="truth-box">
+        <h3>系统性失职揭露</h3>
+        ${TRUTH.failures.map(([n,d], i) => `<p>${i+1}. <strong>${esc(n)}</strong>：${esc(d)}</p>`).join('')}
+      </div>
+    `);
+    return;
+  }
+  if(id === 'safety'){
+    openModal(`
+      <h2 style="color:#3fb950">🛡️ 安全警示教育</h2>
+      <div class="sub">游戏结束前，请务必向全体玩家展示</div>
+      <div class="stat-row">
+        <div class="stat"><b>29</b><span>轻微事故</span></div>
+        <div class="stat"><b>300</b><span>未遂先兆</span></div>
+        <div class="stat"><b>1000</b><span>事故隐患</span></div>
+        <div class="stat"><b>1</b><span>严重事故</span></div>
+      </div>
+      <div class="truth-box" style="border-color:rgba(63,185,80,.3)">
+        <h3 style="color:#3fb950">海恩法则</h3>
+        <p>每一起严重事故的背后，必然有 29 次轻微事故、300 起未遂先兆和 1000 起事故隐患。</p>
+      </div>
+      <div class="truth-box" style="border-color:rgba(255,138,0,.3)">
+        <h3 style="color:#ffc247">《安全生产法》明确规定</h3>
+        <p>生产经营单位必须遵守本法和其他有关安全生产的法律、法规，加强安全生产管理，建立健全全员安全生产责任制和安全生产规章制度。</p>
+      </div>
+      <div class="truth-box">
+        <h3>系统性反思</h3>
+        <p>在这个故事里，李国栋的死，不是周文静一个人的推搡造成的。它是张建国的纵容、陈志远的违规、孙福贵的贪婪、徐丽华的妥协、吴建国的盲从、刘强的沉默、马国涛的漠视、赵小雨的犹豫，以及周文静最后的疯狂，共同堆叠而成的必然。</p>
+      </div>
+      <div class="quote">
+        <p>"安全不是成本，是生命！<br>每一个签名都是一份生死状。<br>剧本有终局，安全无彩排！"</p>
+        <span>—— 李国栋 生前最后一条朋友圈</span>
+      </div>
+    `);
+  }
+}
+
+function renderHostRoom(){
+  const pids = Object.keys(H.players);
+  const list = $('#hostPlayerList');
+  if(!pids.length){
+    list.innerHTML = `<div class="empty-tip">还没有玩家加入。<br>请把房间码 <b style="color:#ffc247">${esc(H.roomCode)}</b> 发给其他玩家，或点击上方「生成邀请二维码」让玩家扫码加入。</div>`;
+  }else{
+    list.innerHTML = pids.map(pid => {
+      const p = H.players[pid];
+      const r = p.roleId ? roleById(p.roleId) : null;
+      const roleName = r ? r.name : '未抽取角色';
+      const roleColor = r ? r.tone : '#8b95a3';
+      return `
+        <div class="player-row ${p.connected === false ? 'offline' : ''}">
+          <div class="avatar">${esc((p.name || '?').slice(0,1))}</div>
+          <div class="info">
+            <b>${esc(p.name || '玩家')}${p.connected === false ? ' <span style="color:#ff8a8d;font-size:11px">（已离线）</span>' : ''}</b>
+            <span>角色：<b style="color:${roleColor}">${esc(roleName)}</b></span>
+          </div>
+          <div class="actions">
+            ${p.roleId ? `<button class="btn ghost small" data-reset="${pid}">重置角色</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    $$('#hostPlayerList [data-reset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pid = btn.dataset.reset;
+        if(!H.players[pid]) return;
+        if(!confirm('确定要重置该玩家的角色吗？重置后该玩家可以重新抽取角色。')) return;
+        H.players[pid].roleId = null;
+        H.players[pid].slot = null;
+        H.players[pid].revealed = [];
+        Object.keys(H.votes).forEach(v => { if(H.votes[v] === pid) delete H.votes[v]; });
+        broadcastSync();
+        renderHostClues();
+        renderHostRoles();
+        updateHostStatus();
+      });
+    });
+  }
+
+  const participants = Object.entries(H.players).filter(([id, pl]) => pl.roleId);
+  const voteCount = {};
+  participants.forEach(([id, pl]) => { voteCount[pl.roleId] = 0; });
+  Object.values(H.votes).forEach(target => {
+    if(voteCount[target] !== undefined) voteCount[target]++;
+  });
+  const maxVote = Math.max(1, ...Object.values(voteCount));
+
+  const vBox = $('#hostVoteResult');
+  if(!participants.length){
+    vBox.innerHTML = `<div class="empty-tip">还没有玩家抽取角色，无法开始投票。</div>`;
+  }else if(!H.voteStarted){
+    vBox.innerHTML = `<div class="empty-tip">投票尚未开始。点击上方「开始投票」按钮后，玩家将可以投票。</div>`;
+  }else{
+    vBox.innerHTML = `
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">已投票 ${Object.keys(H.votes).length} / ${participants.length} 人</p>
+      ${participants.map(([id, pl]) => {
+        const r = roleById(pl.roleId);
+        const cnt = voteCount[pl.roleId] || 0;
+        const pct = Math.round(cnt / maxVote * 100);
+        return `
+          <div class="result-row">
+            <span class="nm" style="color:${r ? r.tone : '#fff'}">${esc(r ? r.name : pl.roleId)}</span>
+            <div class="result-bar"><i style="width:${pct}%"></i></div>
+            <span class="cnt">${cnt} 票</span>
+          </div>
+        `;
+      }).join('')}
+    `;
+  }
+
+  const revealedSet = new Set();
+  Object.values(H.players).forEach(pl => (pl.revealed || []).forEach(i => revealedSet.add(i)));
+  const rlist = $('#hostRevealedList');
+  if(!revealedSet.size){
+    rlist.innerHTML = `<div class="empty-tip">还没有玩家公开自己的证据。</div>`;
+  }else{
+    rlist.innerHTML = Array.from(revealedSet).sort((a,b)=>a-b).map(i => {
+      const c = CLUES[i];
+      const who = Object.entries(H.players)
+        .filter(([id, pl]) => (pl.revealed||[]).includes(i))
+        .map(([id, pl]) => pl.name || '玩家').join('、');
+      return `
+        <div class="vote-card-mini">
+          <span class="nm">${esc(c.ico)} ${esc(c.title)}</span>
+          <span class="tagv" style="margin-left:auto">由 ${esc(who)} 公开</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  renderHostRoles();
+}
+
+/* =========================================================
+   十四、玩家渲染
+   ========================================================= */
+function renderPlayerAll(){
+  const role = P.roleId ? roleById(P.roleId) : null;
+  const rp = $('#playerRolePill');
+  if(role){
+    rp.textContent = `角色：${role.name}`;
+    rp.className = 'pill ok';
+  }else{
+    rp.textContent = '未分配角色';
+    rp.className = 'pill';
+  }
+
+  const vp = $('#playerVotePill');
+  if(P.voteStarted){
+    vp.textContent = P.myVote ? '已投票' : '投票进行中';
+    vp.className = 'pill red';
+  }else{
+    vp.textContent = '投票未开始';
+    vp.className = 'pill';
+  }
+
+  if(!P.roleId){
+    $('#playerDrawArea').classList.remove('hidden');
+    $('#playerContent').classList.add('hidden');
+    renderPlayerDraw();
+    return;
+  }
+
+  $('#playerDrawArea').classList.add('hidden');
+  $('#playerContent').classList.remove('hidden');
+
+  renderPlayerRole();
+  renderPlayerEvidence();
+  renderPlayerPublic();
+  renderPlayerVote();
+}
+
+function renderPlayerDraw(){
+  const taken = P.takenRoleIds || [];
+  $('#playerCastGrid').innerHTML = ROLES.map((r, i) => {
+    const isTaken = taken.includes(r.id);
+    return `
+      <div class="cast-card ${isTaken ? 'flipped' : ''}" data-slot="${i}">
+        <div class="cast-inner">
+          <div class="cast-face cast-front">
+            <div class="num">${String(i+1).padStart(2,'0')}</div>
+            <div class="lbl">点击抽取角色</div>
+          </div>
+          <div class="cast-face cast-back" style="border-color:${isTaken ? '#8b95a3' : r.tone}55">
+            ${isTaken ? `
+              <div>
+                <div class="rname" style="color:#8b95a3">${esc(r.name)}</div>
+                <div class="rmeta">已被其他玩家抽取</div>
+              </div>
+            ` : `
+              <div>
+                <div class="rname" style="color:${r.tone}">？ ？ ？</div>
+                <div class="rmeta">点击抽取</div>
+              </div>
+            `}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  $$('#playerCastGrid .cast-card').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = Number(el.dataset.slot);
+      const rid = ROLES[idx].id;
+      if((P.takenRoleIds||[]).includes(rid)){
+        alert('该角色已被其他玩家抽取，请选择其他卡牌。');
+        return;
+      }
+      if(!confirm('确定要抽取这张卡牌吗？抽取后系统会随机分配一个剩余角色给你，不可更改。')) return;
+      P.conn.send({ t:'drawRole' });
+    });
+  });
+}
+
+function renderPlayerRole(){
+  const r = roleById(P.roleId);
+  if(!r) return;
+  $('#playerRoleBox').innerHTML = `
+    <div class="card" style="border-color:${r.tone}55">
+      <h3 style="color:${r.tone};font-size:20px;letter-spacing:3px">${esc(r.name)}</h3>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">${esc(r.meta)}</p>
+
+      <div class="block">
+        <div class="bt">背 景</div>
+        <p style="font-size:14px;color:#c7ccd4;line-height:1.85">${esc(r.background)}</p>
+      </div>
+
+      <div class="block">
+        <div class="bt">你的时间线</div>
+        <div class="role-block" style="margin-bottom:0">
+          <ul>${r.timeline.map(s => `<li>${esc(s)}</li>`).join('')}</ul>
+        </div>
+      </div>
+
+      <div class="reveal-wrap" id="pRoleReveal">
+        <button class="reveal-btn warm" id="pRoleRevealBtn">
+          <span class="arr">▶</span>
+          <span id="pRoleRevealLabel">点击显示秘密与目标</span>
+        </button>
+        <div class="reveal-body">
+          <div class="role-block">
+            <div class="rbt">⚠ 你的秘密（请勿泄露）</div>
+            <ul>${r.secrets.map(s => `<li>${esc(s)}</li>`).join('')}</ul>
+          </div>
+          <div class="role-block">
+            <div class="rbt">你的目标</div>
+            <p>${esc(r.goal)}</p>
+          </div>
+          <div class="role-block" style="background:rgba(229,72,77,.08);border-color:rgba(229,72,77,.3)">
+            <p style="font-size:12.5px;color:#ff9a9d">⚠️ 本页内容仅限本人查看。游戏过程中请勿直接宣读"秘密"，而是通过表演、暗示、选择性透露来推进推理。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  $('#pRoleRevealBtn').addEventListener('click', () => {
+    const w = $('#pRoleReveal');
+    w.classList.toggle('open');
+    const opened = w.classList.contains('open');
+    $('#pRoleRevealLabel').textContent = opened ? '收起秘密与目标' : '点击显示秘密与目标';
+  });
+}
+
+function renderPlayerEvidence(){
+  const roundColor = {1:'#ff8a00', 2:'#e5484d', 3:'#b45cf0'};
+  const list = P.myEvidence || [];
+  const grid = $('#playerEvidenceGrid');
+
+  if(!list.length){
+    grid.innerHTML = `<div class="empty-tip" style="grid-column:1/-1">你当前没有可查看的证据。<br>主持人可能会在后续手动分配证据给你。</div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(i => {
+    const c = CLUES[i];
+    const locked = c.round > P.clueRound;
+    const isRevealed = (P.revealed || []).includes(i);
+    const isPublic = (c.ownerId === 'public');
+    return `
+      <button class="tile ${locked ? 'locked' : ''}" data-pevi="${i}" style="--tc:${roundColor[c.round]}">
+        <div class="tno">第 ${c.round} 轮${isPublic ? ' · 公共' : ''}</div>
+        <span class="ticon">${locked ? '🔒' : c.ico}</span>
+        <h3>${esc(c.title)}</h3>
+        <div class="tm">${esc(c.holder)}</div>
+        <div class="tfoot">
+          <span class="badge ${isRevealed ? 'green' : (isPublic ? 'blue' : '')}">${isRevealed ? '已公开' : (isPublic ? '公共信息' : '未公开')}</span>
+          <span class="go">${locked ? '未解锁 →' : '查看 →'}</span>
+        </div>
+      </button>
+    `;
+  }).join('');
+
+  $$('#playerEvidenceGrid .tile').forEach(el => {
+    el.addEventListener('click', () => {
+      const i = Number(el.dataset.pevi);
+      const c = CLUES[i];
+      if(c.round > P.clueRound){
+        alert('该证据尚未解锁。\n当前进度：第 ' + P.clueRound + ' 轮\n请等待主持人推进剧情。');
+        return;
+      }
+      openPlayerEvidence(i);
+    });
+  });
+}
+
+function openPlayerEvidence(i){
+  const c = CLUES[i];
+  const isRevealed = (P.revealed || []).includes(i);
+  const isPublic = c.ownerId === 'public';
+
+  openModal(`
+    <h2>${esc(c.ico)} ${esc(c.title)}</h2>
+    <div class="sub">持有/来源：${esc(c.holder)} · 第 ${c.round} 轮证据</div>
+
+    <div class="block">
+      <div class="bt">证据内容</div>
+      <div class="evi-desc">${esc(c.desc)}</div>
+    </div>
+
+    ${isPublic ? `
+      <div class="block" style="background:rgba(122,162,247,.08);border:1px solid rgba(122,162,247,.3);border-radius:10px;padding:12px 14px;margin-bottom:12px">
+        <p style="font-size:13px;color:#9db8ff;margin:0">📢 这是一条公共信息，所有玩家都可以看到。</p>
+      </div>
+      <div class="block">
+        <div class="bt">隐藏线索 / 主持人视角</div>
+        <div class="secret-box">
+          <ul>${c.hidden.map(h => `<li>${esc(h)}</li>`).join('')}</ul>
+        </div>
+      </div>
+    ` : `
+      <div class="reveal-wrap" id="pRevealWrap" style="margin-bottom:12px">
+        <button class="reveal-btn" id="pRevealBtn">
+          <span class="arr">▶</span>
+          <span id="pRevealLabel">点击显示隐藏线索（仅你可见）</span>
+        </button>
+        <div class="reveal-body">
+          <div class="secret-box">
+            <div class="sh">⚠ 隐藏线索 · 仅你可见</div>
+            <ul>${c.hidden.map(h => `<li>${esc(h)}</li>`).join('')}</ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="bt">公开操作</div>
+        <button class="btn ${isRevealed ? 'ghost' : 'danger'}" id="pToggleReveal" style="width:100%">
+          ${isRevealed ? '取消公开（收回该证据）' : '📢 向所有玩家公开证据内容'}
+        </button>
+        <p style="font-size:12.5px;color:var(--muted);margin-top:10px">
+          ${isRevealed
+            ? '你已公开此证据。<b style="color:#7ee787">其他玩家只能看到证据内容，看不到你的隐藏线索。</b>'
+            : '公开后，其他玩家将能看到<b style="color:#ffc247">证据内容</b>，但你的<b style="color:#ff8a8d">隐藏线索不会被公开</b>。'}
+        </p>
+      </div>
+    `}
+  `);
+
+  if(!isPublic){
+    $('#pRevealBtn').addEventListener('click', () => {
+      const w = $('#pRevealWrap');
+      w.classList.toggle('open');
+      const opened = w.classList.contains('open');
+      $('#pRevealLabel').textContent = opened ? '收起隐藏线索' : '点击显示隐藏线索（仅你可见）';
+    });
+
+    $('#pToggleReveal').addEventListener('click', () => {
+      if(!P.conn || !P.conn.open){ alert('与主持人连接已断开。'); return; }
+      if(isRevealed){
+        if(!confirm('确定要收回这条证据的公开吗？')) return;
+        P.conn.send({ t:'unrevealEvidence', idx:i });
+      }else{
+        if(!confirm('确定要向所有玩家公开这条证据吗？\n\n其他玩家只能看到证据内容，你的隐藏线索不会被公开。')) return;
+        P.conn.send({ t:'revealEvidence', idx:i });
+      }
+      closeModal();
+    });
+  }
+}
+
+function renderPlayerPublic(){
+  const roundColor = {1:'#ff8a00', 2:'#e5484d', 3:'#b45cf0'};
+  const list = (P.publicEvidence || []).filter(i => !(P.myEvidence||[]).includes(i));
+  const grid = $('#playerPublicGrid');
+
+  if(!list.length){
+    grid.innerHTML = `<div class="empty-tip" style="grid-column:1/-1">目前还没有玩家公开自己的证据。<br>等待其他玩家主动公开。</div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(i => {
+    const c = CLUES[i];
+    const locked = c.round > P.clueRound;
+    return `
+      <button class="tile ${locked ? 'locked' : ''}" data-pubevi="${i}" style="--tc:${roundColor[c.round]}">
+        <div class="tno">第 ${c.round} 轮 · 已公开</div>
+        <span class="ticon">${locked ? '🔒' : c.ico}</span>
+        <h3>${esc(c.title)}</h3>
+        <div class="tm">${esc(c.holder)}</div>
+        <div class="tfoot">
+          <span class="badge green">已公开</span>
+          <span class="go">${locked ? '未解锁 →' : '查看 →'}</span>
+        </div>
+      </button>
+    `;
+  }).join('');
+
+  $$('#playerPublicGrid .tile').forEach(el => {
+    el.addEventListener('click', () => {
+      const i = Number(el.dataset.pubevi);
+      const c = CLUES[i];
+      if(c.round > P.clueRound){
+        alert('该证据尚未解锁。\n当前进度：第 ' + P.clueRound + ' 轮');
+        return;
+      }
+      openPublicEvidence(i);
+    });
+  });
+}
+
+function openPublicEvidence(i){
+  const c = CLUES[i];
+  openModal(`
+    <h2>${esc(c.ico)} ${esc(c.title)}</h2>
+    <div class="sub">持有/来源：${esc(c.holder)} · 第 ${c.round} 轮证据 · 已公开</div>
+
+    <div class="block">
+      <div class="bt">证据内容</div>
+      <div class="evi-desc">${esc(c.desc)}</div>
+    </div>
+
+    <div class="block" style="background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.3);border-radius:10px;padding:12px 14px;margin-bottom:0">
+      <p style="font-size:13px;color:#7ee787;margin:0">📢 这条证据已被玩家公开，所有玩家都可以看到以上证据内容。<br>
+      <span style="color:var(--muted);font-size:12px">※ 持有者的"隐藏线索"属于个人推理笔记，未包含在公开内容中。</span></p>
+    </div>
+  `);
+}
+
+function renderPlayerVote(){
+  const box = $('#playerVoteBox');
+
+  if(!P.voteStarted){
+    box.innerHTML = `
+      <div class="empty-tip">
+        ⏳ 主持人还没有开启凶手投票。<br>
+        请等待主持人点击「开始投票」按钮后，再回到这里进行投票。
+      </div>
+    `;
+    return;
+  }
+
+  const list = P.allPlayers || [];
+  if(!list.length){
+    box.innerHTML = `<div class="empty-tip">还没有其他玩家抽取角色。</div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <h3>选择你认为的凶手</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">
+        ${P.myVote ? '你已投票，可以重新选择以修改投票结果。' : '点击下方任意角色进行投票。'}
+      </p>
+      <div class="vote-list" id="playerVoteList">
+        ${list.map(p => {
+          const r = roleById(p.roleId);
+          const sel = P.myVote === p.roleId;
+          return `
+            <button class="vote-item ${sel ? 'sel' : ''}" data-target="${p.roleId}">
+              <h4 style="color:${r ? r.tone : '#fff'}">${esc(r ? r.name : p.roleId)}</h4>
+              <div class="m">玩家：${esc(p.playerName || '')}</div>
+            </button>
+          `;
+        }).join('')}
+      </div>
+    </div>
+
+    ${P.myVote ? `
+      <div class="card" style="border-color:rgba(63,185,80,.4);background:rgba(63,185,80,.05)">
+        <h3 style="color:#7ee787">✅ 你已投票</h3>
+        <p>你当前投票给：<b style="color:var(--accent-2)">${esc((roleById(P.myVote)||{}).name || P.myVote)}</b></p>
+        <p style="font-size:12.5px;color:var(--muted);margin:0">结果由主持人统一公布。</p>
+      </div>
+    ` : ''}
+  `;
+
+  $$('#playerVoteList .vote-item').forEach(el => {
+    el.addEventListener('click', () => {
+      if(!P.conn || !P.conn.open){ alert('与主持人连接已断开。'); return; }
+      const target = el.dataset.target;
+      const targetName = (roleById(target)||{}).name || target;
+      const oldName = P.myVote ? ((roleById(P.myVote)||{}).name || P.myVote) : '';
+      const msg = P.myVote
+        ? `你之前投票给「${oldName}」，确定要改为「${targetName}」吗？`
+        : `确定投票给「${targetName}」吗？`;
+      if(!confirm(msg)) return;
+      P.conn.send({ t:'vote', target: target });
+    });
+  });
+}
+
+/* =========================================================
+   十五、事件绑定
+   ========================================================= */
+function bindEvents(){
+
+  $('#btnCreateRoom').addEventListener('click', createRoom);
+  $('#btnReturnRoom').addEventListener('click', returnToLastRoom);
+  $('#btnJoinRoom').addEventListener('click', joinRoom);
+  $('#inpRoomCode').addEventListener('input', e => {
+    e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  });
+  $('#inpRoomCode').addEventListener('keydown', e => {
+    if(e.key === 'Enter') $('#inpPlayerName').focus();
+  });
+  $('#inpPlayerName').addEventListener('keydown', e => {
+    if(e.key === 'Enter') joinRoom();
+  });
+
+  $('#btnShowQR').addEventListener('click', showQRModal);
+  const btnQR2 = $('#btnShowQR2');
+  if(btnQR2) btnQR2.addEventListener('click', showQRModal);
+
+  $('#hostTabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab');
+    if(!btn) return;
+    $$('#hostTabs .tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    $$('#screen-host .panel').forEach(p => p.classList.remove('active'));
+    $('#panel-' + btn.dataset.tab).classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+
+  $('#playerTabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab');
+    if(!btn) return;
+    $$('#playerTabs .tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    $$('#screen-player .panel').forEach(p => p.classList.remove('active'));
+    $('#panel-' + btn.dataset.tab).classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+
+  $('#btnNextRound').addEventListener('click', () => {
+    if(H.clueRound < 3){
+      H.clueRound++;
+      renderHostClues();
+      broadcastSync();
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+  });
+  $('#btnResetRound').addEventListener('click', () => {
+    if(!confirm('确定要重置证据解锁进度吗？')) return;
+    H.clueRound = 1;
+    renderHostClues();
+    broadcastSync();
+  });
+
+  $('#btnCopyCode').addEventListener('click', () => {
+    const code = H.roomCode;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(code).then(() => {
+        const b = $('#btnCopyCode');
+        b.textContent = '已复制 ✓';
+        setTimeout(() => b.textContent = '复制', 1600);
+      }).catch(() => {
+        prompt('请手动复制房间码：', code);
+      });
+    }else{
+      prompt('请手动复制房间码：', code);
+    }
+  });
+
+  $('#btnStartVote').addEventListener('click', () => {
+    const participants = Object.values(H.players).filter(p => p.roleId);
+    if(!participants.length){ alert('还没有玩家抽取角色，无法开始投票。'); return; }
+    if(H.voteStarted){ alert('投票已经开始了。'); return; }
+    if(!confirm('确定要开始凶手投票吗？开始后所有玩家将可以投票。')) return;
+    H.voteStarted = true;
+    H.votes = {};
+    broadcastSync();
+    updateHostStatus();
+    renderHostRoom();
+  });
+
+  $('#btnResetVote').addEventListener('click', () => {
+    if(!confirm('确定要重置投票吗？所有已投票数将被清空，投票状态保持开启。')) return;
+    H.votes = {};
+    broadcastSync();
+    renderHostRoom();
+    updateHostStatus();
+  });
+
+  $('#btnBackHomeHost').addEventListener('click', () => {
+    if(!confirm('确定要退出房间吗？所有玩家将会断开连接。')) return;
+    try{
+      Object.keys(H.conns).forEach(pid => {
+        try{ H.conns[pid].close(); }catch(e){}
+      });
+      if(H.peer) H.peer.destroy();
+    }catch(e){}
+    location.reload();
+  });
+
+  $('#btnBackHomePlayer').addEventListener('click', () => {
+    if(!confirm('确定要退出房间吗？')) return;
+    try{ if(P.peer) P.peer.destroy(); }catch(e){}
+    location.reload();
+  });
+
+  $('#modalClose').addEventListener('click', closeModal);
+  $('#modalMask').addEventListener('click', e => {
+    if(e.target.id === 'modalMask') closeModal();
+  });
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape') closeModal();
+  });
+}
+
+/* =========================================================
+   十六、启动
+   ========================================================= */
+bindEvents();
+
+(function prefill(){
+  try{
+    const lastRoom = localStorage.getItem(LS_PLAYER_ROOM);
+    const lastName = localStorage.getItem(LS_PLAYER_NAME);
+    if(lastRoom) $('#inpRoomCode').value = lastRoom;
+    if(lastName) $('#inpPlayerName').value = lastName;
+
+    const lastHostRoom = localStorage.getItem(LS_HOST_ROOM);
+    const hint = $('#lastRoomHint');
+    if(lastHostRoom && hint){
+      hint.style.display = 'block';
+      hint.innerHTML = `上次创建的房间：<b style="color:#ffc247;letter-spacing:2px">${esc(lastHostRoom)}</b>`;
+    }
+  }catch(e){}
+})();
+
+(function handleJoinParam(){
+  try{
+    const params = new URLSearchParams(location.search);
+    const joinCode = (params.get('join') || '').trim().toUpperCase();
+    if(!joinCode || joinCode.length !== 6) return;
+
+    const codeInput = $('#inpRoomCode');
+    if(codeInput) codeInput.value = joinCode;
+
+    const joinCard = $('#joinCard');
+    if(joinCard){
+      joinCard.classList.add('highlight');
+      setTimeout(() => joinCard.classList.remove('highlight'), 6000);
+    }
+
+    setTimeout(() => {
+      const nameInput = $('#inpPlayerName');
+      if(nameInput){
+        nameInput.scrollIntoView({behavior:'smooth', block:'center'});
+        setTimeout(() => nameInput.focus(), 600);
+      }
+    }, 400);
+
+    try{
+      history.replaceState(null, '', getBaseUrl());
+    }catch(e){}
+  }catch(e){
+    console.error('解析 join 参数失败：', e);
+  }
+})();
+
+setInterval(() => {
+  if(P.roleId && !$('#playerDrawArea').classList.contains('hidden')){
+    renderPlayerAll();
+  }
+}, 800);
+</script>
+</body>
+</html>

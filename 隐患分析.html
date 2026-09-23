@@ -1,0 +1,2019 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>亦庄人才集团隐患分类统计系统</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fc;
+            min-height: 100vh;
+            padding: 24px;
+            color: #1e2a3a;
+        }
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .app-header {
+            background: linear-gradient(135deg, #0b2a4a 0%, #1c4e7a 100%);
+            border-radius: 16px;
+            padding: 28px 36px;
+            color: white;
+            margin-bottom: 28px;
+            box-shadow: 0 8px 24px rgba(11, 42, 74, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .app-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-header h1 .icon {
+            font-size: 30px;
+        }
+        .app-header .subtitle {
+            font-size: 14px;
+            opacity: 0.85;
+            margin-top: 4px;
+            font-weight: 300;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: white;
+            color: #0b2a4a;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+        .btn-success {
+            background: #2ecc71;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+        }
+        .btn-info {
+            background: #3498db;
+            color: white;
+        }
+        .btn-info:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+        }
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: white;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+        .btn-warning:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+        }
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 12px;
+        }
+        .btn-mgmt {
+            background: #8e44ad;
+            color: white;
+        }
+        .btn-mgmt:hover {
+            background: #7d3c98;
+            transform: translateY(-2px);
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 28px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            margin-bottom: 24px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e2a3a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-title .badge {
+            background: #e8edf3;
+            color: #4a5a6e;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 14px;
+            border-radius: 20px;
+            margin-left: auto;
+        }
+        .card-title .badge-info {
+            background: #d6eaf8;
+            color: #1a5276;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 14px;
+            border-radius: 20px;
+            margin-left: 12px;
+        }
+        .upload-area {
+            border: 2px dashed #d0dcec;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: border-color 0.3s;
+            cursor: pointer;
+            background: #fafcff;
+        }
+        .upload-area:hover {
+            border-color: #1c4e7a;
+        }
+        .upload-area .icon-big {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        .upload-area p {
+            color: #6a7e98;
+            font-size: 15px;
+        }
+        .upload-area .rule-note {
+            background: #eef4fa;
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: inline-block;
+            margin-top: 12px;
+            font-size: 14px;
+            color: #1e2a3a;
+        }
+        .upload-area .rule-note strong {
+            color: #0b2a4a;
+        }
+        .upload-area input[type="file"] {
+            display: none;
+        }
+        .file-info {
+            background: #f0f4f8;
+            border-radius: 8px;
+            padding: 12px 18px;
+            margin-top: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+        }
+        .mapping-area {
+            background: #f8fafd;
+            border-radius: 12px;
+            padding: 20px 24px;
+            border: 1px solid #d0dcec;
+            margin-top: 16px;
+            display: none;
+        }
+        .mapping-area.active {
+            display: block;
+        }
+        .mapping-area .mapping-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .mapping-area .mapping-header .title {
+            font-weight: 700;
+            font-size: 15px;
+            color: #1e2a3a;
+        }
+        .mapping-area .mapping-header .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .mapping-item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #eef2f7;
+            margin-bottom: 10px;
+            transition: border-color 0.2s;
+        }
+        .mapping-item:hover {
+            border-color: #d0dcec;
+        }
+        .mapping-item .label-input {
+            flex: 1;
+            min-width: 100px;
+            padding: 6px 10px;
+            border: 2px solid #d0dcec;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e2a3a;
+            background: white;
+        }
+        .mapping-item .label-input:focus {
+            outline: none;
+            border-color: #1c4e7a;
+            box-shadow: 0 0 0 3px rgba(28, 78, 122, 0.1);
+        }
+        .mapping-item .label-input.core {
+            background: #f0f4f8;
+            border-color: #b0c4d8;
+        }
+        .mapping-item .col-select {
+            padding: 6px 10px;
+            border: 2px solid #d0dcec;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            min-width: 70px;
+            font-weight: 600;
+        }
+        .mapping-item .col-select:focus {
+            outline: none;
+            border-color: #1c4e7a;
+        }
+        .mapping-item .core-badge {
+            font-size: 11px;
+            color: #6a7e98;
+            background: #eef2f7;
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+        .mapping-item .del-btn {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0 4px;
+            transition: transform 0.2s;
+            opacity: 0.6;
+        }
+        .mapping-item .del-btn:hover {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+        .mapping-item .del-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .mapping-area .add-btn {
+            margin-top: 6px;
+        }
+        .mapping-area .mapping-hint {
+            font-size: 13px;
+            color: #6a7e98;
+            margin-top: 10px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        table th {
+            background: #f0f4f8;
+            color: #1e2a3a;
+            font-weight: 700;
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 2px solid #d0dcec;
+            white-space: nowrap;
+        }
+        table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #eef2f7;
+            vertical-align: middle;
+        }
+        table tr:hover td {
+            background: #f8fafd;
+        }
+        .cat-badge {
+            display: inline-block;
+            padding: 2px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .cat-env {
+            background: #eafaf1;
+            color: #1e8449;
+        }
+        .cat-equip {
+            background: #eaf2fa;
+            color: #2471a3;
+        }
+        .cat-doc {
+            background: #fef9e7;
+            color: #b7950b;
+        }
+        .cat-site {
+            background: #fdedec;
+            color: #c0392b;
+        }
+        .cat-fire {
+            background: #fadbd8;
+            color: #e74c3c;
+        }
+        .cat-flood {
+            background: #d6eaf8;
+            color: #2e86c1;
+        }
+        .cat-electric {
+            background: #fcf3cf;
+            color: #d4ac0d;
+        }
+        .cat-civil {
+            background: #ebf5fb;
+            color: #1f618d;
+        }
+        .cat-health {
+            background: #e8f8f5;
+            color: #0e6655;
+        }
+        .cat-park {
+            background: #f4ecf7;
+            color: #7d3c98;
+        }
+        .cat-dynamic {
+            background: #f0f0f0;
+            color: #4a5a6e;
+        }
+
+        .category-select {
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 2px solid #d0dcec;
+            background: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 120px;
+            font-family: inherit;
+            color: #1e2a3a;
+            appearance: auto;
+        }
+        .category-select:hover {
+            border-color: #1c4e7a;
+        }
+        .category-select:focus {
+            outline: none;
+            border-color: #1c4e7a;
+            box-shadow: 0 0 0 3px rgba(28, 78, 122, 0.15);
+        }
+        .category-select option {
+            padding: 4px 8px;
+            font-weight: 500;
+        }
+        .category-select.env {
+            border-color: #1e8449;
+        }
+        .category-select.equip {
+            border-color: #2471a3;
+        }
+        .category-select.doc {
+            border-color: #b7950b;
+        }
+        .category-select.site {
+            border-color: #c0392b;
+        }
+        .category-select.fire {
+            border-color: #e74c3c;
+        }
+        .category-select.flood {
+            border-color: #2e86c1;
+        }
+        .category-select.electric {
+            border-color: #d4ac0d;
+        }
+        .category-select.civil {
+            border-color: #1f618d;
+        }
+        .category-select.health {
+            border-color: #0e6655;
+        }
+        .category-select.park {
+            border-color: #7d3c98;
+        }
+        .category-select.dynamic {
+            border-color: #8a9bb0;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .stat-item {
+            background: #f8fafd;
+            border-radius: 12px;
+            padding: 14px 12px;
+            text-align: center;
+            border: 1px solid #eef2f7;
+            transition: all 0.3s ease;
+        }
+        .stat-item .number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0b2a4a;
+            line-height: 1.2;
+        }
+        .stat-item .label {
+            font-size: 13px;
+            color: #6a7e98;
+            margin-top: 4px;
+        }
+        .bar-wrap {
+            height: 6px;
+            background: #eef2f7;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .bar-wrap .fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: #8a9bb0;
+        }
+        .empty-state .icon {
+            font-size: 52px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        .empty-state p {
+            font-size: 15px;
+        }
+        .result-area {
+            display: none;
+        }
+        .result-area.active {
+            display: block;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e2a3a;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 14px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 999;
+            max-width: 90%;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .toast.success {
+            background: #27ae60;
+        }
+        .toast.error {
+            background: #e74c3c;
+        }
+        .clickable {
+            cursor: pointer;
+            color: #1c4e7a;
+            font-weight: 700;
+            text-decoration: underline;
+        }
+        .clickable:hover {
+            color: #0b2a4a;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 28px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+        }
+        .modal-box h3 {
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+        .modal-box .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6a7e98;
+        }
+        .modal-box .close-btn:hover {
+            color: #1e2a3a;
+        }
+        .modal-box .category-list {
+            margin: 16px 0;
+        }
+        .modal-box .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #eef2f7;
+        }
+        .modal-box .category-item .count {
+            font-size: 13px;
+            color: #6a7e98;
+            margin-left: 12px;
+        }
+        .modal-box .category-item .del-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 2px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .modal-box .category-item .del-btn:disabled {
+            background: #d0dcec;
+            cursor: not-allowed;
+        }
+        .modal-box .add-category {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .modal-box .add-category input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #d0dcec;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .modal-box .add-category input:focus {
+            outline: none;
+            border-color: #1c4e7a;
+        }
+        .modal-box .add-category .btn-add {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .modal-box .add-category .btn-add:hover {
+            background: #27ae60;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+            .app-header {
+                padding: 20px;
+            }
+            .app-header h1 {
+                font-size: 20px;
+            }
+            .card {
+                padding: 16px 18px;
+            }
+            .stat-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .btn {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+            table th,
+            table td {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+            .modal-box {
+                padding: 20px;
+                width: 95%;
+            }
+            .category-select {
+                min-width: 90px;
+                font-size: 12px;
+                padding: 2px 6px;
+            }
+            .modal-box .category-item {
+                flex-wrap: wrap;
+            }
+            .mapping-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .mapping-item .label-input {
+                min-width: auto;
+            }
+            .mapping-area .mapping-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .extra-stats-wrapper {
+                flex-direction: column !important;
+            }
+        }
+        .footer-note {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #8a9bb0;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .col-hint {
+            display: inline-block;
+            background: #eef4fa;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #1c4e7a;
+            font-weight: 600;
+        }
+        .edit-hint {
+            font-size: 12px;
+            color: #8a9bb0;
+            font-weight: 400;
+            background: #f0f4f8;
+            padding: 2px 12px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+        .stat-item.updated {
+            animation: statPulse 0.4s ease;
+        }
+        @keyframes statPulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 20px rgba(28, 78, 122, 0.15);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        .row-updated {
+            animation: rowFlash 0.6s ease;
+        }
+        @keyframes rowFlash {
+            0% {
+                background: #d6eaf8;
+            }
+            100% {
+                background: transparent;
+            }
+        }
+        .del-row-btn {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 4px;
+            transition: transform 0.2s;
+        }
+        .del-row-btn:hover {
+            transform: scale(1.2);
+            color: #c0392b;
+        }
+        .core-lock {
+            font-size: 13px;
+            color: #6a7e98;
+            cursor: default;
+        }
+        .mapping-item .col-select option:disabled {
+            color: #ccc;
+        }
+        .field-count-badge {
+            font-size: 12px;
+            color: #6a7e98;
+            background: #eef2f7;
+            padding: 0 10px;
+            border-radius: 12px;
+        }
+        /* 额外统计样式 - 并排显示 */
+        .extra-stats-wrapper {
+            display: flex;
+            gap: 30px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+        .extra-stats-wrapper .stats-col {
+            flex: 1;
+            min-width: 250px;
+        }
+        .extra-stats-wrapper .stats-col .sub-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e2a3a;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .extra-stats-wrapper .stats-col table {
+            font-size: 14px;
+            width: 100%;
+        }
+        .extra-stats-wrapper .stats-col table th {
+            background: #f0f4f8;
+            font-weight: 700;
+        }
+        .extra-stats-wrapper .stats-col table td:last-child {
+            text-align: center;
+            font-weight: 700;
+        }
+        .extra-stats-wrapper .stats-col table .num-clickable {
+            cursor: pointer;
+            color: #1c4e7a;
+            text-decoration: underline;
+            transition: color 0.2s;
+        }
+        .extra-stats-wrapper .stats-col table .num-clickable:hover {
+            color: #0b2a4a;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+
+        <!-- 头部 -->
+        <header class="app-header">
+            <div>
+                <h1>
+                    <span class="icon">🏢</span>
+                    亦庄人才集团隐患分类统计系统
+                </h1>
+                <div class="subtitle">上传 Excel · 自由配置数据列 · 固定读取B列（公司） · 项目/公司汇总统计</div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-outline" onclick="loadSample()">📄 加载示例</button>
+                <button class="btn btn-primary" onclick="clearAll()">🗑️ 清空</button>
+                <button class="btn btn-success" onclick="exportExcel()">📊 导出 Excel</button>
+            </div>
+        </header>
+
+        <!-- 上传区域 -->
+        <div class="card">
+            <div class="card-title">
+                📂 上传 Excel 文件
+                <span class="badge">自动跳过第1行（标题行）</span>
+            </div>
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="icon-big">📤</div>
+                <p><strong>点击上传</strong> 或拖拽 Excel 文件至此（.xlsx / .xls）</p>
+                <p style="font-size:13px; color:#8a9bb0; margin-top:6px;">上传后请在下方的列映射配置中自由增删改字段</p>
+                <div class="rule-note" style="background:#fef9e7; border:1px solid #f39c12;">
+                    📌 <strong>固定读取 B 列作为「公司」</strong>，用于公司维度统计
+                </div>
+                <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(event)">
+            </div>
+            <div id="fileInfo" class="file-info" style="display:none;">
+                <span>📎</span>
+                <span id="fileName"></span>
+                <span style="color:#8a9bb0; margin-left:8px;" id="rowCount"></span>
+                <button class="btn btn-danger" style="padding:4px 12px; font-size:12px; margin-left:auto;" onclick="clearFile()">✕</button>
+            </div>
+
+            <!-- 列映射配置 -->
+            <div id="mappingArea" class="mapping-area">
+                <div class="mapping-header">
+                    <span class="title">📌 数据列映射配置</span>
+                    <div class="actions">
+                        <button class="btn btn-info btn-sm" onclick="addMappingField()">➕ 添加字段</button>
+                        <button class="btn btn-warning btn-sm" onclick="resetMappingToDefault()">↩️ 恢复默认</button>
+                        <button class="btn btn-success btn-sm" onclick="startAnalysis()">🔍 开始分析</button>
+                    </div>
+                </div>
+                <div id="mappingList"></div>
+                <div class="mapping-hint">💡 核心字段（项目、位置、隐患描述）用于分类和重复分析，不可删除。自定义字段会显示在明细列表中。<br>📌 <strong>B列（第2列）固定读取为「公司」</strong>，不占用映射配置。</div>
+            </div>
+        </div>
+
+        <!-- 结果区域 -->
+        <div id="resultArea" class="result-area">
+            <div class="card">
+                <div class="card-title">
+                    📊 分类统计概览
+                    <span class="badge" id="totalBadge">共 0 条</span>
+                    <span class="badge-info">💡 修改分类或管理类别自动更新</span>
+                </div>
+                <div id="statsGrid" class="stat-grid"></div>
+                <div class="table-responsive" id="summaryTableWrap"></div>
+                <!-- 额外统计：项目 & 公司 并排显示 -->
+                <div id="extraStatsContainer" class="extra-stats-wrapper"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">
+                    🔁 重复隐患分析（同项目 + 同位置，出现 ≥3 次）
+                    <span class="badge" id="repeatBadge">0 组</span>
+                </div>
+                <div id="repeatContainer"><div class="empty-state"><div class="icon">🔍</div><p>暂无重复隐患</p></div></div>
+            </div>
+            <div class="card">
+                <div class="card-title flex-between">
+                    <span>
+                        📋 隐患明细列表
+                        <span class="edit-hint">✏️ 点击下拉框修改分类</span>
+                    </span>
+                    <span>
+                        <span class="badge" id="detailBadge">0 条</span>
+                        <button class="btn btn-mgmt btn-sm" onclick="manageCategories()" style="margin-left:12px;">⚙️ 管理分类</button>
+                        <button class="btn btn-info btn-sm" onclick="showMapping()" style="margin-left:8px;">📌 配置列</button>
+                    </span>
+                </div>
+                <div class="table-responsive" id="detailTableWrap"><div class="empty-state"><div class="icon">📭</div><p>暂无数据</p></div></div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            ⚙️ 分类依据：环境安全 · 设施设备安全 · 文字资料管理 · 现场作业安全 · 消防安全 · 汛期安全 · 用电安全 · 文明施工 · 公共卫生安全 · 不文明游园
+        </div>
+    </div>
+
+    <!-- 重复隐患详情模态框 -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <button class="close-btn" onclick="closeModal()">✕</button>
+            <h3 id="modalTitle">重复隐患详情</h3>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- 分类管理模态框 -->
+    <div class="modal-overlay" id="categoryModal">
+        <div class="modal-box">
+            <button class="close-btn" onclick="closeCategoryModal()">✕</button>
+            <h3>📋 管理分类</h3>
+            <p style="font-size:14px; color:#6a7e98; margin-bottom:12px;">添加或删除分类，删除时该分类下必须没有隐患条目。</p>
+            <div id="categoryListContainer" class="category-list"></div>
+            <div class="add-category">
+                <input type="text" id="newCategoryInput" placeholder="输入新分类名称" />
+                <button class="btn-add" onclick="addCategory()">添加</button>
+            </div>
+            <div style="margin-top:12px; text-align:right;">
+                <button class="btn btn-primary" onclick="closeCategoryModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 实体详情模态框（项目/公司隐患列表） -->
+    <div class="modal-overlay" id="entityModal">
+        <div class="modal-box">
+            <button class="close-btn" onclick="closeEntityModal()">✕</button>
+            <h3 id="entityModalTitle">隐患详情</h3>
+            <div id="entityModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ============================================================
+        // 1. 基础分类定义
+        // ============================================================
+        const BASE_CATEGORIES = {
+            '环境安全': {
+                keywords: ['环境', '污染', '排放', '废气', '废水', '废渣', '噪音', '粉尘', '气味', '辐射', '光污染',
+                    '生态', '环保', '绿色', '排污', '治理', '回收', '废弃物', '危险废物', '化学品', '泄漏',
+                    '土壤', '水源', '空气', '雾霾', '扬尘', '噪声', '振动', '垃圾', '卫生',
+                    '树', '扰民', '受伤', '病虫害', '枯树', '补水', '砍树', '伐树', '去冠', '补种'
+                ],
+                css: 'cat-env',
+                selectClass: 'env'
+            },
+            '设施设备安全': {
+                keywords: ['机械', '电气', '电路', '电机', '轴承', '磨损', '检修', '保养', '润滑',
+                    '提示牌', '紧固', '调试', '校准', '传感器', '阀门', '管道', '压力', '温度', '振动', '异响',
+                    '警示牌', '漏油', '漏气', '异常', '损坏', '防护', '管路', '水池', '警示',
+                    '护栏', '脚手架', '吊篮', '叉车', '压力容器', '脱落', '螺丝', '门框', '合页', '门把手',
+                    '窗户', '电梯', '锁', '按钮', '按键', '护网', '硬隔离', '道闸', '摄像头', '监控',
+                    '故障', '出入口'
+                ],
+                css: 'cat-equip',
+                selectClass: 'equip'
+            },
+            '文字资料管理': {
+                keywords: ['资料', '档案', '记录', '文件', '图纸', '方案', '报告', '台账', '登记', '签字',
+                    '审批', '存档', '保管', '整理', '分类', '编号', '缺少', '不完整', '未归档', '遗失',
+                    '预案', '制度', '规程', '标准', '规范', '体系', '计划', '应急预案', '操作规程',
+                    '清单', '盖章', '架构', '流程', '联系人', '责任人', '电话'
+                ],
+                css: 'cat-doc',
+                selectClass: 'doc'
+            },
+            '现场作业安全': {
+                keywords: ['现场', '作业', '施工', '操作', '违章', '违规', '冒险', '侥幸', '麻痹', '疲劳',
+                    '注意力', '培训', '技能', '资格', '证书', '指挥', '交叉作业', '高处作业', '临边作业',
+                    '基坑', '开挖', '吊装', '焊接', '切割', '带电作业', '动火', '有限空间',
+                    '闭园', '保安', '证件', '公示', '离岗', '过快'
+                ],
+                css: 'cat-site',
+                selectClass: 'site'
+            },
+            '消防安全': {
+                keywords: ['消防', '火灾', '火源', '灭火器', '消火栓', '消防栓', '自动喷淋', '报警', '疏散', '逃生',
+                    '通道', '出口', '应急照明', '防火门', '防火墙', '易燃', '可燃', '明火', '烟感',
+                    '自行车', '消防泵', '消防水池', '消防车', '消防演练', '消防设施', '消防器材',
+                    '楼梯', '消防主机', '楼道', '灭火毯', '燃气', '吸烟', '火警',
+                    '防火卷帘', '挡烟垂壁', '防火隔断'
+                ],
+                css: 'cat-fire',
+                selectClass: 'fire'
+            },
+            '汛期安全': {
+                keywords: ['汛期', '防汛', '防洪', '内涝', '积水', '排水', '河道', '堤坝', '泵站', '水灾',
+                    '暴雨', '雷电', '台风', '大风', '强降雨', '水位', '泄洪', '抢险', '物资',
+                    '沙袋', '沙箱', '防水挡板', '漏水', '渗水', '排水管道', '雨排', '篦子', '闸板'
+                ],
+                css: 'cat-flood',
+                selectClass: 'flood'
+            },
+            '用电安全': {
+                keywords: ['用电', '电气', '电路', '电缆', '配电', '开关', '插座', '漏电', '接地',
+                    '断电', '触电', '电击', '短路', '过载', '绝缘', '破损', '老化',
+                    '临时用电', '电焊', '电动工具', '插排', '线轴',
+                    '二级箱', '三级箱', '箱变', '接线板', '插头', '配电箱',
+                    '穿管', '落地', '一级箱', '电器', '飞线', '照明装置'
+                ],
+                css: 'cat-electric',
+                selectClass: 'electric'
+            },
+            '文明施工': {
+                keywords: ['文明施工', '围挡', '封闭管理', '冲洗', '降尘', '覆盖', '路面', '环境整洁',
+                    '材料堆放', '工完场清', '标牌', '宣传', '噪声控制', '照明不足', '便民',
+                    '渣土', '安全帽', '洞口', '安全带', '防护栏', '安全网', '施工时间'
+                ],
+                css: 'cat-civil',
+                selectClass: 'civil'
+            },
+            '公共卫生安全': {
+                keywords: ['卫生', '防疫', '消毒', '疫苗', '传染病', '疫情', '流感',
+                    '口罩', '通风', '清洁', '食品', '饮用水', '餐具', '垃圾',
+                    '灭鼠', '杀虫', '蚊蝇', '食堂', '宿舍', '厕所', '吐痰'
+                ],
+                css: 'cat-health',
+                selectClass: 'health'
+            },
+            '不文明游园': {
+                keywords: ['游园', '游客', '公园', '绿地', '踩踏', '折枝', '攀爬', '乱丢', '涂鸦',
+                    '噪音扰民', '遛狗', '宠物', '机动车', '骑车', '骑自行车', '骑电动车',
+                    '滑雪', '滑冰', '野炊', '烧烤', '露宿', '钓鱼',
+                    '不文明', '违规入园', '翻越', '损坏设施', '破坏植被',
+                    '帐篷', '吊床', '踹树', '挖野菜', '摘', '乱涂', '乱画',
+                    '暴走', '广场舞', '音箱', '音响', '投掷'
+                ],
+                css: 'cat-park',
+                selectClass: 'park'
+            }
+        };
+        const BASE_NAMES = Object.keys(BASE_CATEGORIES);
+
+        // ============================================================
+        // 2. 动态分类管理
+        // ============================================================
+        let dynamicCategories = [...BASE_NAMES];
+
+        function getCategories() { return dynamicCategories; }
+
+        function resetCategories() { dynamicCategories = [...BASE_NAMES]; }
+
+        function addCategory() {
+            const input = document.getElementById('newCategoryInput');
+            const name = input.value.trim();
+            if (!name) { showToast('请输入分类名称', 'error'); return false; }
+            if (dynamicCategories.some(c => c.toLowerCase() === name.toLowerCase())) {
+                showToast('该分类已存在', 'error');
+                return false;
+            }
+            dynamicCategories.push(name);
+            input.value = '';
+            refreshAllUI();
+            if (document.getElementById('categoryModal').classList.contains('active')) renderCategoryList();
+            showToast(`✅ 已添加分类「${name}」`, 'success');
+            return true;
+        }
+
+        function deleteCategory(name) {
+            if (currentData && currentData.classified) {
+                const count = currentData.classified.filter(item => item.category === name).length;
+                if (count > 0) {
+                    showToast(`❌ 无法删除「${name}」，该分类下还有 ${count} 条隐患`, 'error');
+                    return false;
+                }
+            }
+            const idx = dynamicCategories.indexOf(name);
+            if (idx === -1) { showToast('分类不存在', 'error'); return false; }
+            if (BASE_NAMES.includes(name) && !confirm(`「${name}」是系统预定义分类，确定删除吗？`)) return false;
+            dynamicCategories.splice(idx, 1);
+            refreshAllUI();
+            if (document.getElementById('categoryModal').classList.contains('active')) renderCategoryList();
+            showToast(`✅ 已删除分类「${name}」`, 'success');
+            return true;
+        }
+
+        // ============================================================
+        // 3. 关键词索引与分类函数
+        // ============================================================
+        const KEYWORD_INDEX = {};
+        for (const [cat, data] of Object.entries(BASE_CATEGORIES)) {
+            for (const kw of [...new Set(data.keywords)]) {
+                if (!KEYWORD_INDEX[kw]) KEYWORD_INDEX[kw] = [];
+                KEYWORD_INDEX[kw].push(cat);
+            }
+        }
+
+        function classifyHazard(text) {
+            if (!text) return '环境安全';
+            const scores = {};
+            for (const cat of BASE_NAMES) scores[cat] = 0;
+            for (const [kw, cats] of Object.entries(KEYWORD_INDEX)) {
+                if (text.includes(kw)) {
+                    for (const cat of cats) scores[cat] = (scores[cat] || 0) + 1;
+                }
+            }
+            let maxScore = 0,
+                bestCat = '环境安全';
+            for (const [cat, score] of Object.entries(scores)) {
+                if (score > maxScore) { maxScore = score;
+                    bestCat = cat; }
+            }
+            if (maxScore < 1 && /安全|隐患|风险/.test(text)) return '环境安全';
+            return bestCat;
+        }
+
+        // ============================================================
+        // 4. 列映射管理
+        // ============================================================
+        const DEFAULT_MAPPINGS = [
+            { id: 'project', label: '项目', col: 'C', isCore: true },
+            { id: 'location', label: '位置', col: 'G', isCore: true },
+            { id: 'description', label: '隐患描述', col: 'H', isCore: true }
+        ];
+
+        let mappings = [];
+        let nextCustomId = 1;
+        let rawRows = [];
+        let mergeMap = {};
+        let columnCount = 0;
+        let currentData = null;
+
+        function initMappings() {
+            mappings = JSON.parse(JSON.stringify(DEFAULT_MAPPINGS));
+            nextCustomId = 1;
+        }
+        initMappings();
+
+        function getCoreFieldIds() {
+            return ['project', 'location', 'description'];
+        }
+
+        function renderMappingUI() {
+            const container = document.getElementById('mappingList');
+            const colOptions = [];
+            for (let i = 0; i < Math.max(columnCount, 26); i++) {
+                const letter = String.fromCharCode(65 + i);
+                colOptions.push(`<option value="${letter}">${letter}</option>`);
+            }
+            const colOptsHtml = colOptions.join('');
+
+            let html = '';
+            mappings.forEach((map, idx) => {
+                const isCore = map.isCore || getCoreFieldIds().includes(map.id);
+                const canDelete = !isCore;
+                const disabledAttr = canDelete ? '' : 'disabled';
+                const coreBadge = isCore ? '<span class="core-badge">核心</span>' :
+                    '<span class="core-badge" style="background:#f0f0f0;">自定义</span>';
+                let colVal = map.col;
+                const maxCol = Math.max(columnCount, 1);
+                if (colLetterToIndex(colVal) >= maxCol) {
+                    colVal = String.fromCharCode(65 + Math.min(columnCount - 1, 0));
+                }
+                html += `
+                    <div class="mapping-item" data-id="${map.id}">
+                        <input class="label-input ${isCore ? 'core' : ''}" 
+                               type="text" 
+                               value="${escapeHtml(map.label)}" 
+                               ${isCore ? 'readonly' : ''}
+                               onchange="updateMappingLabel('${map.id}', this.value)" 
+                               placeholder="字段名称" />
+                        <select class="col-select" onchange="updateMappingCol('${map.id}', this.value)">
+                            ${colOptsHtml.replace(`value="${colVal}"`, `value="${colVal}" selected`)}
+                        </select>
+                        ${coreBadge}
+                        <button class="del-btn" onclick="removeMapping('${map.id}')" ${disabledAttr} title="${isCore ? '核心字段不可删除' : '删除此字段'}">
+                            ✕
+                        </button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            const count = mappings.length;
+            const coreCount = mappings.filter(m => getCoreFieldIds().includes(m.id)).length;
+            document.querySelector('.mapping-area .title').textContent =
+                `📌 数据列映射配置 (共 ${count} 个字段，核心 ${coreCount} 个)`;
+        }
+
+        function addMappingField() {
+            if (mappings.length >= 20) {
+                showToast('最多支持20个字段', 'error');
+                return;
+            }
+            const newId = 'custom_' + (nextCustomId++);
+            const usedCols = mappings.map(m => m.col);
+            let availCol = 'A';
+            for (let i = 0; i < Math.max(columnCount, 26); i++) {
+                const letter = String.fromCharCode(65 + i);
+                if (!usedCols.includes(letter)) { availCol = letter; break; }
+            }
+            mappings.push({
+                id: newId,
+                label: '自定义字段' + (nextCustomId - 1),
+                col: availCol,
+                isCore: false
+            });
+            renderMappingUI();
+            showToast(`✅ 已添加自定义字段，请设置名称和列`, 'success');
+        }
+
+        function removeMapping(id) {
+            if (getCoreFieldIds().includes(id)) {
+                showToast('核心字段不可删除', 'error');
+                return;
+            }
+            const idx = mappings.findIndex(m => m.id === id);
+            if (idx === -1) return;
+            mappings.splice(idx, 1);
+            renderMappingUI();
+            showToast('已删除字段', '');
+        }
+
+        function updateMappingLabel(id, label) {
+            const map = mappings.find(m => m.id === id);
+            if (map) map.label = label.trim() || map.label;
+        }
+
+        function updateMappingCol(id, col) {
+            const map = mappings.find(m => m.id === id);
+            if (map) map.col = col;
+        }
+
+        function resetMappingToDefault() {
+            if (!confirm('将恢复默认列映射（项目→C，位置→G，隐患描述→H），确定吗？')) return;
+            initMappings();
+            renderMappingUI();
+            showToast('已恢复默认映射', 'success');
+        }
+
+        function colLetterToIndex(letter) { return letter.toUpperCase().charCodeAt(0) - 65; }
+
+        function indexToColLetter(idx) { return String.fromCharCode(65 + idx); }
+
+        // ============================================================
+        // 5. Excel 解析与数据提取（固定读取B列）
+        // ============================================================
+        function parseExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames[0];
+                        const sheet = workbook.Sheets[sheetName];
+                        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                        const merges = sheet['!merges'] || [];
+                        const mergeMap = {};
+                        for (const merge of merges) {
+                            const sr = merge.s.r,
+                                er = merge.e.r,
+                                sc = merge.s.c,
+                                ec = merge.e.c;
+                            const topVal = rows[sr] ? rows[sr][sc] : '';
+                            for (let r = sr; r <= er; r++) {
+                                if (!mergeMap[r]) mergeMap[r] = {};
+                                for (let c = sc; c <= ec; c++) mergeMap[r][c] = topVal;
+                            }
+                        }
+                        resolve({ rows, mergeMap });
+                    } catch (err) { reject(err); }
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function getCellValue(rowIdx, colIdx) {
+            if (rowIdx < 0 || rowIdx >= rawRows.length) return '';
+            if (colIdx < 0) return '';
+            if (mergeMap[rowIdx] && mergeMap[rowIdx][colIdx] !== undefined) {
+                return mergeMap[rowIdx][colIdx];
+            }
+            const row = rawRows[rowIdx];
+            return row && row[colIdx] !== undefined ? row[colIdx] : '';
+        }
+
+        function extractData() {
+            const result = [];
+            for (let i = 1; i < rawRows.length; i++) {
+                const rowData = {};
+                let hasDescription = false;
+                for (const map of mappings) {
+                    const colIdx = colLetterToIndex(map.col);
+                    let val = getCellValue(i, colIdx);
+                    if (typeof val === 'string') val = val.trim();
+                    else if (val === undefined || val === null) val = '';
+                    else val = String(val).trim();
+                    rowData[map.id] = val;
+                    if (map.id === 'description' && val) hasDescription = true;
+                }
+                let company = getCellValue(i, 1);
+                if (typeof company === 'string') company = company.trim();
+                else if (company === undefined || company === null) company = '';
+                else company = String(company).trim();
+
+                if (hasDescription) {
+                    result.push({
+                        rowIndex: i + 1,
+                        fields: rowData,
+                        project: rowData.project || '(未填写)',
+                        location: rowData.location || '(未填写)',
+                        description: rowData.description || '',
+                        company: company || '(未填写)'
+                    });
+                }
+            }
+            return result;
+        }
+
+        // ============================================================
+        // 6. 数据处理核心
+        // ============================================================
+        function processData(dataRows) {
+            resetCategories();
+            const classified = dataRows.map(row => {
+                const cat = classifyHazard(row.description);
+                return { ...row, category: cat };
+            });
+            const stats = computeStats(classified);
+            const total = classified.length;
+            const repeatResults = computeRepeat(classified);
+
+            const projectStats = {};
+            const companyStats = {};
+            for (const r of classified) {
+                const proj = r.project || '(未填写)';
+                projectStats[proj] = (projectStats[proj] || 0) + 1;
+                const comp = r.company || '(未填写)';
+                companyStats[comp] = (companyStats[comp] || 0) + 1;
+            }
+
+            return { classified, stats, total, repeatResults, projectStats, companyStats };
+        }
+
+        function computeStats(classified) {
+            const stats = {};
+            for (const cat of getCategories()) stats[cat] = 0;
+            for (const r of classified) {
+                const cat = r.category;
+                if (stats[cat] !== undefined) stats[cat]++;
+                else stats[cat] = 1;
+            }
+            return stats;
+        }
+
+        function computeRepeat(classified) {
+            const groupMap = {};
+            for (const row of classified) {
+                const key = `${row.project}|${row.location}`;
+                if (!groupMap[key]) groupMap[key] = { project: row.project, location: row.location, descMap: {} };
+                const desc = row.description;
+                groupMap[key].descMap[desc] = (groupMap[key].descMap[desc] || 0) + 1;
+            }
+            const repeatResults = [];
+            for (const key in groupMap) {
+                const group = groupMap[key];
+                const entries = Object.entries(group.descMap).filter(([d, c]) => c >= 3);
+                if (entries.length > 0) {
+                    const items = entries.map(([desc, count]) => {
+                        const rows = classified.filter(r =>
+                            r.project === group.project &&
+                            r.location === group.location &&
+                            r.description === desc
+                        );
+                        return { description: desc, count, rows };
+                    });
+                    repeatResults.push({ project: group.project, location: group.location, items });
+                }
+            }
+            return repeatResults;
+        }
+
+        // ============================================================
+        // 7. UI 渲染
+        // ============================================================
+        function renderAll(data) {
+            const { classified, stats, total, repeatResults, projectStats, companyStats } = data;
+            renderStats(stats, total, projectStats, companyStats);
+            renderDetails(classified);
+            renderRepeat(repeatResults);
+            document.getElementById('resultArea').classList.add('active');
+        }
+
+        function renderStats(stats, total, projectStats, companyStats) {
+            const grid = document.getElementById('statsGrid');
+            const summaryWrap = document.getElementById('summaryTableWrap');
+            if (total === 0) {
+                grid.innerHTML = `<div class="empty-state"><div class="icon">📊</div><p>暂无数据</p></div>`;
+                summaryWrap.innerHTML = '';
+                document.getElementById('totalBadge').textContent = '共 0 条';
+                document.getElementById('extraStatsContainer').innerHTML = '';
+                return;
+            }
+            const cats = getCategories();
+            let gridHtml = '';
+            for (const cat of cats) {
+                const count = stats[cat] || 0;
+                const pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                const css = BASE_CATEGORIES[cat] ? BASE_CATEGORIES[cat].css : 'cat-dynamic';
+                gridHtml += `
+                    <div class="stat-item" data-category="${cat}">
+                        <div class="number">${count}</div>
+                        <div class="label">${cat}</div>
+                        <div class="bar-wrap"><div class="fill" style="width:${pct}%; background:${BASE_CATEGORIES[cat] ? 'var(--color-'+css+')' : '#8a9bb0'};"></div></div>
+                        <div style="font-size:12px; color:#8a9bb0; margin-top:2px;">${pct}%</div>
+                    </div>
+                `;
+            }
+            grid.innerHTML = gridHtml;
+
+            let tableHtml =
+                `<table><thead><tr><th>分类</th><th>数量</th><th>占比</th></tr></thead><tbody>`;
+            for (const cat of cats) {
+                const count = stats[cat] || 0;
+                const pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                const css = BASE_CATEGORIES[cat] ? BASE_CATEGORIES[cat].css : 'cat-dynamic';
+                tableHtml +=
+                    `<tr><td><span class="cat-badge ${css}">${cat}</span></td><td><strong>${count}</strong></td><td>${pct}%</td></tr>`;
+            }
+            tableHtml += `</tbody></table>`;
+            summaryWrap.innerHTML = tableHtml;
+            document.getElementById('totalBadge').textContent = `共 ${total} 条`;
+
+            // 渲染项目统计和公司统计 - 并排显示，公司左，项目右
+            const extraContainer = document.getElementById('extraStatsContainer');
+            let extraHtml = '';
+
+            // 公司统计（左）
+            extraHtml += `<div class="stats-col">`;
+            if (companyStats && Object.keys(companyStats).length > 0) {
+                extraHtml += `<div class="sub-title">🏢 各公司隐患总数</div><div class="table-wrap"><table><thead><tr><th>公司</th><th>隐患数量</th></tr></thead><tbody>`;
+                const sortedComp = Object.entries(companyStats).sort((a, b) => b[1] - a[1]);
+                for (const [comp, count] of sortedComp) {
+                    extraHtml +=
+                        `<tr><td>${escapeHtml(comp)}</td><td><span class="num-clickable" onclick="showEntityDetail('company', '${escapeHtml(comp)}')">${count}</span></td></tr>`;
+                }
+                extraHtml += `</tbody></table></div>`;
+            } else {
+                extraHtml += `<div class="sub-title">🏢 各公司隐患总数</div><p style="color:#8a9bb0;font-size:13px;">暂无数据</p>`;
+            }
+            extraHtml += `</div>`;
+
+            // 项目统计（右）
+            extraHtml += `<div class="stats-col">`;
+            if (projectStats && Object.keys(projectStats).length > 0) {
+                extraHtml += `<div class="sub-title">📊 各项目隐患总数</div><div class="table-wrap"><table><thead><tr><th>项目</th><th>隐患数量</th></tr></thead><tbody>`;
+                const sortedProj = Object.entries(projectStats).sort((a, b) => b[1] - a[1]);
+                for (const [proj, count] of sortedProj) {
+                    extraHtml +=
+                        `<tr><td>${escapeHtml(proj)}</td><td><span class="num-clickable" onclick="showEntityDetail('project', '${escapeHtml(proj)}')">${count}</span></td></tr>`;
+                }
+                extraHtml += `</tbody></table></div>`;
+            } else {
+                extraHtml += `<div class="sub-title">📊 各项目隐患总数</div><p style="color:#8a9bb0;font-size:13px;">暂无数据</p>`;
+            }
+            extraHtml += `</div>`;
+
+            extraContainer.innerHTML = extraHtml;
+        }
+
+        // ============================================================
+        // 7b. 实体详情展示（项目/公司隐患列表）
+        // ============================================================
+        function showEntityDetail(type, name) {
+            if (!currentData || !currentData.classified || currentData.classified.length === 0) {
+                showToast('暂无数据', 'error');
+                return;
+            }
+            const list = currentData.classified;
+            let filtered = [];
+            let title = '';
+            if (type === 'company') {
+                filtered = list.filter(item => item.company === name);
+                title = `🏢 公司「${name}」的隐患列表（共 ${filtered.length} 条）`;
+            } else if (type === 'project') {
+                filtered = list.filter(item => item.project === name);
+                title = `📊 项目「${name}」的隐患列表（共 ${filtered.length} 条）`;
+            } else {
+                return;
+            }
+            if (filtered.length === 0) {
+                showToast('该实体下没有隐患记录', 'error');
+                return;
+            }
+
+            const modal = document.getElementById('entityModal');
+            document.getElementById('entityModalTitle').textContent = title;
+
+            // 获取显示字段
+            const displayFields = mappings.filter(m => m.label.trim());
+            let html = `<div class="table-responsive"><table><thead><tr><th style="width:40px;">#</th>`;
+            html += `<th>公司</th>`;
+            for (const field of displayFields) {
+                html += `<th>${escapeHtml(field.label)}</th>`;
+            }
+            html += `<th>分类</th></tr></thead><tbody>`;
+
+            filtered.forEach((item, idx) => {
+                const css = BASE_CATEGORIES[item.category] ? BASE_CATEGORIES[item.category].css : 'cat-dynamic';
+                html += `<tr><td>${idx+1}</td>`;
+                html += `<td>${escapeHtml(item.company)}</td>`;
+                for (const field of displayFields) {
+                    const val = item.fields && item.fields[field.id] !== undefined ? item.fields[field.id] : '';
+                    html += `<td>${escapeHtml(val)}</td>`;
+                }
+                html += `<td><span class="cat-badge ${css}">${item.category}</span></td></tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            document.getElementById('entityModalBody').innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function closeEntityModal() {
+            document.getElementById('entityModal').classList.remove('active');
+        }
+        document.getElementById('entityModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEntityModal();
+        });
+
+        // ============================================================
+        // 8. 明细列表渲染
+        // ============================================================
+        function renderDetails(classified) {
+            const wrap = document.getElementById('detailTableWrap');
+            if (!classified || classified.length === 0) {
+                wrap.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>暂无隐患条目</p></div>`;
+                document.getElementById('detailBadge').textContent = '0 条';
+                return;
+            }
+
+            const displayFields = mappings.filter(m => m.label.trim());
+            const cats = getCategories();
+
+            let html = `<table><thead><tr><th style="width:50px;">#</th>`;
+            html += `<th>公司</th>`;
+            for (const field of displayFields) {
+                html += `<th>${escapeHtml(field.label)}</th>`;
+            }
+            html += `<th style="min-width:150px;">分类</th><th style="width:50px;">操作</th></tr></thead><tbody>`;
+
+            classified.forEach((item, idx) => {
+                const cat = item.category;
+                const selectClass = BASE_CATEGORIES[cat] ? BASE_CATEGORIES[cat].selectClass : 'dynamic';
+                const selectHtml = `
+                    <select class="category-select ${selectClass}" data-index="${idx}" onchange="updateCategory(${idx}, this.value)">
+                        ${cats.map(c => `<option value="${c}" ${c === cat ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                `;
+
+                html += `<tr data-index="${idx}" id="row-${idx}"><td>${idx+1}</td>`;
+                html += `<td>${escapeHtml(item.company)}</td>`;
+                for (const field of displayFields) {
+                    const val = item.fields && item.fields[field.id] !== undefined ? item.fields[field.id] : '';
+                    html += `<td>${escapeHtml(val)}</td>`;
+                }
+                html += `<td>${selectHtml}</td><td><button class="del-row-btn" onclick="deleteRow(${idx})" title="删除此条隐患">✕</button></td></tr>`;
+            });
+
+            html += `</tbody></table>`;
+            wrap.innerHTML = html;
+            document.getElementById('detailBadge').textContent = `${classified.length} 条`;
+        }
+
+        function renderRepeat(repeatResults) {
+            const container = document.getElementById('repeatContainer');
+            if (!repeatResults || repeatResults.length === 0) {
+                container.innerHTML =
+                    `<div class="empty-state"><div class="icon">🔍</div><p>暂无重复隐患（没有出现≥3次的描述）</p></div>`;
+                document.getElementById('repeatBadge').textContent = '0 组';
+                return;
+            }
+            document.getElementById('repeatBadge').textContent = `${repeatResults.length} 组`;
+            let html =
+                `<div class="table-responsive"><table><thead><tr><th>项目</th><th>位置</th><th>重复隐患描述</th><th style="text-align:center;">重复次数</th></tr></thead><tbody>`;
+            for (const group of repeatResults) {
+                for (const item of group.items) {
+                    html += `
+                        <tr>
+                            <td>${escapeHtml(group.project)}</td>
+                            <td>${escapeHtml(group.location)}</td>
+                            <td>${escapeHtml(item.description)}</td>
+                            <td style="text-align:center;">
+                                <span class="clickable" onclick="showRepeatDetail('${escapeHtml(group.project)}', '${escapeHtml(group.location)}', '${escapeHtml(item.description)}', ${JSON.stringify(item.rows).replace(/"/g, '&quot;')})">
+                                    ${item.count}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+        }
+
+        function updateCategory(index, newCategory) {
+            if (!currentData) return;
+            if (!currentData.classified || index >= currentData.classified.length) return;
+            const oldCat = currentData.classified[index].category;
+            if (oldCat === newCategory) return;
+            currentData.classified[index].category = newCategory;
+            const stats = computeStats(currentData.classified);
+            currentData.stats = stats;
+            currentData.repeatResults = computeRepeat(currentData.classified);
+            const projectStats = {};
+            const companyStats = {};
+            for (const r of currentData.classified) {
+                projectStats[r.project] = (projectStats[r.project] || 0) + 1;
+                companyStats[r.company] = (companyStats[r.company] || 0) + 1;
+            }
+            currentData.projectStats = projectStats;
+            currentData.companyStats = companyStats;
+            refreshAllUI();
+            const row = document.getElementById(`row-${idx}`);
+            if (row) { row.classList.add('row-updated');
+                setTimeout(() => row.classList.remove('row-updated'), 600); }
+            showToast(`✅ 已更新分类：第 ${index+1} 条 → 「${newCategory}」`, 'success');
+        }
+
+        function deleteRow(index) {
+            if (!currentData) return;
+            if (index < 0 || index >= currentData.classified.length) return;
+            if (!confirm(`确认删除第 ${index+1} 条隐患吗？`)) return;
+            currentData.classified.splice(index, 1);
+            const stats = computeStats(currentData.classified);
+            currentData.stats = stats;
+            currentData.total = currentData.classified.length;
+            currentData.repeatResults = computeRepeat(currentData.classified);
+            const projectStats = {};
+            const companyStats = {};
+            for (const r of currentData.classified) {
+                projectStats[r.project] = (projectStats[r.project] || 0) + 1;
+                companyStats[r.company] = (companyStats[r.company] || 0) + 1;
+            }
+            currentData.projectStats = projectStats;
+            currentData.companyStats = companyStats;
+            refreshAllUI();
+            showToast(`✅ 已删除第 ${index+1} 条隐患`, 'success');
+        }
+
+        function refreshAllUI() {
+            if (!currentData) {
+                if (document.getElementById('categoryModal').classList.contains('active')) renderCategoryList();
+                return;
+            }
+            const { classified, stats, total, repeatResults, projectStats, companyStats } = currentData;
+            const newStats = computeStats(classified);
+            currentData.stats = newStats;
+            renderStats(newStats, total, projectStats, companyStats);
+            renderDetails(classified);
+            renderRepeat(repeatResults);
+            if (document.getElementById('categoryModal').classList.contains('active')) renderCategoryList();
+        }
+
+        // ============================================================
+        // 9. 分类管理模态框
+        // ============================================================
+        function manageCategories() {
+            document.getElementById('categoryModal').classList.add('active');
+            renderCategoryList();
+            setTimeout(() => document.getElementById('newCategoryInput').focus(), 100);
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').classList.remove('active');
+        }
+
+        function renderCategoryList() {
+            const container = document.getElementById('categoryListContainer');
+            const cats = getCategories();
+            const counts = currentData ? computeStats(currentData.classified) : {};
+            let html = '';
+            for (const cat of cats) {
+                const count = counts[cat] || 0;
+                const isBase = BASE_NAMES.includes(cat);
+                const disabled = count > 0;
+                html += `
+                    <div class="category-item">
+                        <span>${cat}<span class="count">(${count} 条)</span>${isBase ? '<span style="font-size:11px;color:#8a9bb0;margin-left:8px;">系统预定义</span>' : ''}</span>
+                        <button class="del-btn" onclick="deleteCategory('${escapeHtml(cat)}')" ${disabled ? 'disabled' : ''} title="${disabled ? '该分类下有隐患条目，无法删除' : '删除此分类'}">删除</button>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // 10. 其他辅助函数
+        // ============================================================
+        function showRepeatDetail(project, location, description, rowsJson) {
+            const rows = typeof rowsJson === 'string' ? JSON.parse(rowsJson) : rowsJson;
+            const modal = document.getElementById('modalOverlay');
+            document.getElementById('modalTitle').textContent = `重复隐患详情：${project} | ${location}`;
+            let html =
+                `<p><strong>隐患描述：</strong>${escapeHtml(description)}</p><p><strong>出现次数：</strong>${rows.length} 次</p><table><thead><tr><th>行号</th><th>项目</th><th>位置</th><th>隐患描述</th><th>分类</th></tr></thead><tbody>`;
+            rows.forEach(row => {
+                const css = BASE_CATEGORIES[row.category] ? BASE_CATEGORIES[row.category].css : 'cat-dynamic';
+                html +=
+                    `<tr><td>${row.rowIndex}</td><td>${escapeHtml(row.project)}</td><td>${escapeHtml(row.location)}</td><td>${escapeHtml(row.description)}</td><td><span class="cat-badge ${css}">${row.category}</span></td></tr>`;
+            });
+            html += `</tbody></table>`;
+            document.getElementById('modalBody').innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+        document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+        document.getElementById('categoryModal').addEventListener('click', function(e) { if (e.target === this)
+                closeCategoryModal(); });
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================================
+        // 11. 交互控制
+        // ============================================================
+        function handleFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!['xlsx', 'xls'].includes(ext)) {
+                showToast('请上传 .xlsx 或 .xls 格式的文件', 'error');
+                return;
+            }
+            showToast('正在解析文件...', '');
+            parseExcelFile(file).then(({ rows, mergeMap: merges }) => {
+                rawRows = rows;
+                mergeMap = merges;
+                columnCount = rows.length > 0 ? rows[0].length : 0;
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('rowCount').textContent = `共 ${rows.length} 行（含标题）`;
+                document.getElementById('fileInfo').style.display = 'flex';
+
+                initMappings();
+                for (const map of mappings) {
+                    const idx = colLetterToIndex(map.col);
+                    if (idx >= columnCount) map.col = indexToColLetter(Math.min(columnCount - 1, 0));
+                }
+                renderMappingUI();
+
+                const mappingArea = document.getElementById('mappingArea');
+                mappingArea.classList.add('active');
+                document.getElementById('resultArea').classList.remove('active');
+                currentData = null;
+                showToast('📌 请配置列映射，然后点击「开始分析」', '');
+                mappingArea.scrollIntoView({ behavior: 'smooth' });
+            }).catch(err => {
+                showToast('❌ 解析失败：' + err.message, 'error');
+                console.error(err);
+            });
+            event.target.value = '';
+        }
+
+        function showMapping() {
+            document.getElementById('mappingArea').classList.add('active');
+            renderMappingUI();
+            document.getElementById('mappingArea').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function startAnalysis() {
+            if (rawRows.length === 0) {
+                showToast('请先上传Excel文件', 'error');
+                return;
+            }
+            const coreIds = getCoreFieldIds();
+            for (const id of coreIds) {
+                if (!mappings.find(m => m.id === id)) {
+                    showToast(`核心字段「${id}」缺失，请恢复默认映射`, 'error');
+                    return;
+                }
+            }
+            const dataRows = extractData();
+            if (dataRows.length === 0) {
+                showToast('未提取到有效数据，请检查列映射是否正确', 'error');
+                return;
+            }
+            const processed = processData(dataRows);
+            currentData = { ...processed, rawRows: dataRows };
+            renderAll(processed);
+            document.getElementById('mappingArea').classList.remove('active');
+            showToast(`✅ 分析完成！共 ${processed.total} 条隐患`, 'success');
+        }
+
+        function clearFile() {
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('mappingArea').classList.remove('active');
+            rawRows = [];
+            mergeMap = {};
+            columnCount = 0;
+            currentData = null;
+            document.getElementById('resultArea').classList.remove('active');
+            document.getElementById('statsGrid').innerHTML =
+                `<div class="empty-state"><div class="icon">📊</div><p>暂无数据</p></div>`;
+            document.getElementById('summaryTableWrap').innerHTML = '';
+            document.getElementById('detailTableWrap').innerHTML =
+                `<div class="empty-state"><div class="icon">📭</div><p>暂无隐患条目</p></div>`;
+            document.getElementById('repeatContainer').innerHTML =
+                `<div class="empty-state"><div class="icon">🔍</div><p>暂无重复隐患</p></div>`;
+            document.getElementById('extraStatsContainer').innerHTML = '';
+            document.getElementById('totalBadge').textContent = '共 0 条';
+            document.getElementById('detailBadge').textContent = '0 条';
+            document.getElementById('repeatBadge').textContent = '0 组';
+            resetCategories();
+            initMappings();
+            showToast('🗑️ 已清空所有数据', '');
+        }
+
+        function clearAll() { clearFile(); }
+
+        function loadSample() {
+            const sampleRows = [
+                ['项目', '公司', '位置', '隐患描述'],
+                ['亦庄公园', '亦庄集团', 'A区', '枯树未及时清理，存在倒伏隐患'],
+                ['亦庄公园', '亦庄集团', 'A区', '枯树未及时清理，存在倒伏隐患'],
+                ['亦庄公园', '亦庄集团', 'A区', '枯树未及时清理，存在倒伏隐患'],
+                ['亦庄公园', '亦庄集团', 'B区', '配电箱门锁损坏，存在触电风险'],
+                ['亦庄公园', '亦庄集团', 'B区', '配电箱门锁损坏，存在触电风险'],
+                ['亦庄公园', '亦庄集团', 'B区', '配电箱门锁损坏，存在触电风险'],
+                ['亦庄公园', '亦庄集团', 'C区', '消防通道被自行车堵塞'],
+                ['亦庄公园', '亦庄集团', 'C区', '消防通道被自行车堵塞'],
+                ['亦庄公园', '亦庄集团', 'C区', '消防通道被自行车堵塞'],
+                ['亦庄公园', '亦庄集团', 'D区', '游客在绿地内搭帐篷、吊床'],
+                ['亦庄公园', '亦庄集团', 'D区', '游客在绿地内搭帐篷、吊床'],
+                ['亦庄公园', '亦庄集团', 'D区', '游客在绿地内搭帐篷、吊床'],
+                ['亦庄公园', '亦庄集团', 'E区', '安全培训档案不完整，缺少责任人签字'],
+                ['亦庄公园', '人才公司', 'F区', '基坑周边安全护栏缺失，防护不到位'],
+                ['亦庄公园', '人才公司', 'G区', '施工现场夜间施工噪音扰民'],
+                ['亦庄公园', '人才公司', 'H区', '暴走团音响音量过大，噪音扰民']
+            ];
+            rawRows = sampleRows;
+            columnCount = sampleRows[0].length;
+            mergeMap = {};
+            document.getElementById('fileName').textContent = '示例数据（内置）';
+            document.getElementById('rowCount').textContent = `共 ${sampleRows.length} 行（含标题）`;
+            document.getElementById('fileInfo').style.display = 'flex';
+
+            mappings = [
+                { id: 'project', label: '项目', col: 'A', isCore: true },
+                { id: 'location', label: '位置', col: 'C', isCore: true },
+                { id: 'description', label: '隐患描述', col: 'D', isCore: true }
+            ];
+            renderMappingUI();
+            document.getElementById('mappingArea').classList.add('active');
+            startAnalysis();
+            showToast('📄 示例数据已加载，B列固定为「公司」', 'success');
+        }
+
+        // ============================================================
+        // 12. 导出 Excel
+        // ============================================================
+        function exportExcel() {
+            if (!currentData || !currentData.classified || currentData.classified.length === 0) {
+                showToast('⚠️ 无数据可导出', 'error');
+                return;
+            }
+            const { classified, stats, total, repeatResults, projectStats, companyStats } = currentData;
+            const wb = XLSX.utils.book_new();
+
+            const displayFields = mappings.filter(m => m.label.trim());
+            const header = ['序号', '公司', ...displayFields.map(m => m.label), '分类'];
+            const detailData = [header];
+            classified.forEach((item, idx) => {
+                const row = [idx + 1, item.company];
+                for (const field of displayFields) {
+                    row.push(item.fields && item.fields[field.id] !== undefined ? item.fields[field.id] : '');
+                }
+                row.push(item.category);
+                detailData.push(row);
+            });
+            const wsDetail = XLSX.utils.aoa_to_sheet(detailData);
+            wsDetail['!cols'] = header.map((_, i) => ({ wch: i === 0 ? 6 : i === header.length - 1 ? 16 : 18 }));
+            XLSX.utils.book_append_sheet(wb, wsDetail, '隐患明细');
+
+            const cats = getCategories();
+            const statData = [
+                ['分类', '数量', '占比']
+            ];
+            for (const cat of cats) {
+                const count = stats[cat] || 0;
+                const pct = total > 0 ? ((count / total) * 100).toFixed(1) + '%' : '0%';
+                statData.push([cat, count, pct]);
+            }
+            statData.push(['总计', total, '100%']);
+            const wsStat = XLSX.utils.aoa_to_sheet(statData);
+            wsStat['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 12 }];
+            XLSX.utils.book_append_sheet(wb, wsStat, '分类统计');
+
+            if (repeatResults && repeatResults.length > 0) {
+                const repeatData = [
+                    ['项目', '位置', '重复隐患描述', '重复次数']
+                ];
+                for (const group of repeatResults) {
+                    for (const item of group.items) {
+                        repeatData.push([group.project, group.location, item.description, item.count]);
+                    }
+                }
+                const wsRepeat = XLSX.utils.aoa_to_sheet(repeatData);
+                wsRepeat['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 50 }, { wch: 12 }];
+                XLSX.utils.book_append_sheet(wb, wsRepeat, '重复隐患');
+            } else {
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+                    ['提示'],
+                    ['暂无重复隐患（出现≥3次）']
+                ]), '重复隐患');
+            }
+
+            if (Object.keys(projectStats).length > 0) {
+                const projData = [
+                    ['项目', '隐患数量']
+                ];
+                for (const [p, c] of Object.entries(projectStats).sort((a, b) => b[1] - a[1])) {
+                    projData.push([p, c]);
+                }
+                const wsProj = XLSX.utils.aoa_to_sheet(projData);
+                wsProj['!cols'] = [{ wch: 20 }, { wch: 12 }];
+                XLSX.utils.book_append_sheet(wb, wsProj, '项目统计');
+            }
+            if (Object.keys(companyStats).length > 0) {
+                const compData = [
+                    ['公司', '隐患数量']
+                ];
+                for (const [c, cnt] of Object.entries(companyStats).sort((a, b) => b[1] - a[1])) {
+                    compData.push([c, cnt]);
+                }
+                const wsComp = XLSX.utils.aoa_to_sheet(compData);
+                wsComp['!cols'] = [{ wch: 20 }, { wch: 12 }];
+                XLSX.utils.book_append_sheet(wb, wsComp, '公司统计');
+            }
+
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `隐患分类统计_${new Date().toISOString().slice(0,10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📊 Excel 导出成功！', 'success');
+        }
+
+        // ============================================================
+        // 13. Toast
+        // ============================================================
+        let toastTimer = null;
+
+        function showToast(msg, type) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast';
+            if (type === 'success') el.classList.add('success');
+            if (type === 'error') el.classList.add('error');
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+        }
+
+        // ============================================================
+        // 14. 快捷键 & 初始化
+        // ============================================================
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'e') { e.preventDefault();
+                exportExcel(); }
+            if (e.key === 'Escape') { closeModal();
+                closeCategoryModal();
+                closeEntityModal(); }
+        });
+
+        renderMappingUI();
+
+        console.log('🏢 亦庄人才集团隐患分类统计系统 已加载');
+        console.log('💡 公司统计在左，项目统计在右，并排显示');
+        console.log('💡 点击数字可查看详细隐患列表');
+        console.log('💡 快捷键: Ctrl+E 导出 Excel, ESC 关闭弹窗');
+    </script>
+</body>
+</html>

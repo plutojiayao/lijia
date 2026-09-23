@@ -1,0 +1,2292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a0a">
+<title>狼人杀 · 多人推理</title>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --gold:#c9a84c;--gold-dark:#a8862e;--red:#e74c3c;--green:#2ecc71;
+  --blue:#3498db;--purple:#9b59b6;--night:#2c3e80;--day:#f39c12;
+  --bg:#0a0a0a;--card:#1a1a1a;--card-2:#212121;--border:#2a2a2a
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:#e0e0e0;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;transition:background-color .4s}
+body.night-mode{background:#060820}
+body.day-mode{background:#100a02}
+.app{max-width:960px;margin:0 auto;padding:16px;min-height:100vh}
+.hidden{display:none!important}
+
+/* 首页 */
+.home-logo{text-align:center;padding:32px 0 24px}
+.home-logo .logo-icon{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#e67e22,#d35400);display:inline-flex;align-items:center;justify-content:center;font-size:38px;margin-bottom:16px;box-shadow:0 8px 32px rgba(230,126,34,.3)}
+.home-logo h1{font-size:32px;color:#fff;letter-spacing:4px;font-weight:700}
+.home-logo .sub{color:#888;font-size:13px;margin-top:8px;letter-spacing:2px}
+.intro-card{background:linear-gradient(135deg,#1a1a1a 0%,#141008 100%);border:1px solid rgba(201,168,76,.25);border-radius:16px;padding:22px;margin-bottom:20px;border-left:4px solid var(--gold)}
+.intro-card h2{font-size:15px;color:var(--gold);margin-bottom:14px;letter-spacing:2px;font-weight:700}
+.intro-card p{font-size:13.5px;line-height:1.8;color:#c9c9c9;margin-bottom:10px}
+.intro-card .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.intro-card .tags span{font-size:12px;padding:5px 12px;border-radius:16px;background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.3)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:640px){.two-col{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;display:flex;flex-direction:column}
+.panel h2{font-size:17px;margin-bottom:12px;letter-spacing:1px;font-weight:700}
+.panel .desc{font-size:12.5px;line-height:1.7;color:#999;margin-bottom:18px;flex:1}
+.host-panel h2{color:#f39c12}
+.host-panel .desc strong{color:#f39c12}
+.player-panel h2{color:#e67e22}
+.field-label{font-size:12px;color:#888;margin-bottom:6px;letter-spacing:1px;font-weight:600}
+.input,select{width:100%;padding:14px 16px;background:#0d0d0d;border:1px solid #333;border-radius:10px;color:#e0e0e0;font-size:15px;outline:none;margin-bottom:14px;transition:border-color .2s;font-family:inherit;-webkit-appearance:none}
+.input:focus,select:focus{border-color:var(--gold)}
+.input::placeholder{color:#555}
+.input.code-input{text-transform:uppercase;letter-spacing:8px;text-align:center;font-size:22px;font-family:'Courier New',monospace;font-weight:700}
+.btn{width:100%;padding:15px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;letter-spacing:2px;transition:all .2s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:disabled:active{transform:none}
+.btn-orange{background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;box-shadow:0 4px 16px rgba(230,126,34,.3)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#0a0a0a}
+.btn-outline{background:transparent;border:1px solid #444;color:#ccc}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-danger{background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff}
+.btn-ghost{background:rgba(255,255,255,.05);border:1px solid #2a2a2a;color:#aaa;font-size:14px;letter-spacing:1px;padding:12px}
+.btn-sm{padding:10px 16px;font-size:13px;letter-spacing:1px;width:auto}
+.btn-night{background:linear-gradient(135deg,#34495e,#2c3e50);color:#fff;border:1px solid rgba(155,180,255,.3)}
+.btn-day{background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;border:1px solid rgba(255,200,100,.4)}
+.btn-night.active{box-shadow:0 0 20px rgba(155,180,255,.5);border-color:#5dade2}
+.btn-day.active{box-shadow:0 0 20px rgba(243,156,18,.5)}
+.home-footnote{text-align:center;color:#555;font-size:12px;padding:20px 0 12px;line-height:1.7}
+.home-footnote b{color:var(--gold)}
+.adv-toggle{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:12px;color:#888;margin-bottom:12px}
+.adv-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.adv-panel .hint{font-size:11px;color:#666;margin-bottom:10px;line-height:1.6}
+
+/* 顶部栏 */
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 0;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+.top-bar .phase-tag{padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:1px;display:flex;align-items:center;gap:6px}
+.top-bar .spacer{flex:1}
+.phase-waiting{background:#2a2a2a;color:#999}
+.phase-selecting{background:#2a2a2a;color:#999}
+.phase-night{background:linear-gradient(135deg,#2c3e80,#1a2550);color:#9bb4ff;box-shadow:0 0 16px rgba(44,62,128,.5)}
+.phase-day{background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;box-shadow:0 0 16px rgba(243,156,18,.4)}
+.phase-voting{background:var(--red);color:#fff;animation:pulse 1.5s infinite}
+.phase-ended{background:#1a3a1a;color:var(--green)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* 卡片 */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
+.card h2{font-size:15px;color:var(--gold);margin-bottom:14px;letter-spacing:2px;font-weight:700}
+
+/* 房间码 / 二维码区域 */
+.share-card{background:linear-gradient(180deg,#1a1a1a 0%,#141008 100%);border:1px solid rgba(201,168,76,.35);border-radius:16px;padding:20px;margin-bottom:14px}
+.share-card h2{font-size:15px;color:var(--gold);margin-bottom:14px;letter-spacing:2px;font-weight:700;text-align:center}
+.room-code-row{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:#0d0d0d;border-radius:12px;margin-bottom:12px}
+.room-code{font-size:32px;letter-spacing:10px;color:var(--gold);font-weight:700;font-family:'Courier New',monospace;cursor:pointer;user-select:all}
+.room-code:active{opacity:.7}
+.copy-icon{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold);width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0}
+.copy-icon:active{transform:scale(.92)}
+#qrcode{display:flex;justify-content:center;padding:10px 0}
+#qrcode img,#qrcode canvas{border-radius:8px}
+.share-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.share-buttons .btn{padding:12px;font-size:13px;letter-spacing:1px}
+.share-hint{color:#666;font-size:11px;text-align:center;margin-top:10px;line-height:1.6}
+
+/* 主持人控制台 */
+.console{background:linear-gradient(180deg,#1f1a0d 0%,#141008 100%);border:1px solid rgba(201,168,76,.35);border-radius:16px;padding:18px;margin-bottom:14px}
+.console h3{font-size:14px;color:var(--gold);margin-bottom:6px;letter-spacing:2px;font-weight:700}
+.console .console-hint{font-size:11px;color:#888;margin-bottom:14px;line-height:1.6}
+.phase-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.phase-controls .btn{font-size:14px;padding:16px 10px;letter-spacing:1px}
+.role-console{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px;margin-top:12px}
+.role-console-card{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;padding:14px 8px;text-align:center;transition:all .2s;position:relative;cursor:pointer}
+.role-console-card:hover{border-color:var(--gold);transform:translateY(-2px)}
+.role-console-card:active{transform:scale(.95)}
+.role-console-card .rc-icon{font-size:28px;line-height:1}
+.role-console-card .rc-name{font-size:12px;color:#ccc;font-weight:600;margin-top:6px}
+.role-console-card .rc-skill{font-size:10px;color:#888;margin-top:3px;min-height:14px}
+.role-console-card.disabled-card{opacity:.4}
+.role-console-card .rc-status{position:absolute;top:6px;right:6px;font-size:9px;padding:2px 6px;border-radius:6px;font-weight:700}
+.rc-status.on{background:rgba(46,204,113,.2);color:#58d68d}
+.rc-status.off{background:#2a2a2a;color:#666}
+
+/* 玩家卡片 */
+.player-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+@media(min-width:640px){.player-grid{grid-template-columns:repeat(4,1fr)}}
+.player-card{background:var(--card-2);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;transition:all .2s;position:relative;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.player-card.tappable{cursor:pointer}
+.player-card.tappable:hover{border-color:var(--gold)}
+.player-card.tappable:active{transform:scale(.96)}
+.player-card.dead{background:#0f0f0f;border-color:#1a1a1a;opacity:.4;filter:grayscale(1)}
+.player-card.me{border-color:var(--gold);box-shadow:0 0 0 1px rgba(201,168,76,.3)}
+.player-card.me.dead{border-color:#333;box-shadow:none}
+.p-avatar{font-size:24px;line-height:1}
+.p-name{font-size:11px;color:#ccc;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.p-role{font-size:10px;padding:3px 8px;border-radius:6px;background:#2a2a2a;color:#999;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.p-role.wolf{background:rgba(231,76,60,.2);color:#ff6b6b}
+.p-role.god{background:rgba(52,152,219,.2);color:#5dade2}
+.p-role.villager{background:rgba(46,204,113,.2);color:#58d68d}
+.dead-badge{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;font-size:9px;padding:2px 8px;border-radius:8px;white-space:nowrap;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.skill-used-badge{position:absolute;top:-6px;left:-6px;background:#444;color:#999;font-size:9px;padding:2px 6px;border-radius:8px;font-weight:700}
+
+/* 卡牌抽取 */
+.card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.draw-card{aspect-ratio:3/4;perspective:800px;cursor:pointer}
+.draw-card-inner{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d}
+.draw-card.flipped .draw-card-inner{transform:rotateY(180deg)}
+.draw-card-front,.draw-card-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px}
+.draw-card-front{background:linear-gradient(135deg,#1a1a1a 0%,#0d0d0d 100%);border:2px solid var(--gold);color:var(--gold);font-size:32px;box-shadow:inset 0 0 20px rgba(201,168,76,.15)}
+.draw-card-front::after{content:'';position:absolute;inset:6px;border:1px dashed rgba(201,168,76,.3);border-radius:8px;pointer-events:none}
+.draw-card-back{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#0a0a0a;transform:rotateY(180deg);font-weight:700;text-align:center}
+.draw-card-back .back-icon{font-size:44px;line-height:1}
+.draw-card-back .back-name{font-size:13px;margin-top:6px;letter-spacing:2px;font-weight:800}
+.draw-card:active{transform:scale(.96)}
+.draw-card.disabled{pointer-events:none;opacity:.3}
+.draw-card.flipped.disabled{opacity:1}
+
+/* 我的身份 */
+.my-role-display{text-align:center;padding:24px;background:linear-gradient(180deg,#1a1a1a,#141008);border:1px solid var(--gold);border-radius:16px;margin:12px 0;cursor:pointer;transition:all .2s}
+.my-role-display:active{transform:scale(.98)}
+.my-role-display .big-icon{font-size:56px;line-height:1;margin-bottom:6px}
+.my-role-display .big-name{font-size:26px;color:var(--gold);margin-top:6px;letter-spacing:8px;font-weight:700}
+.my-role-display .big-desc{font-size:13px;color:#999;margin-top:12px;line-height:1.6;padding:0 12px}
+.my-role-display .info-hint{font-size:11px;color:#666;margin-top:12px;padding-top:12px;border-top:1px solid #222}
+.secret-hint{color:#c0392b;font-size:11px;text-align:center;margin-top:8px;opacity:.85;letter-spacing:1px}
+
+/* 技能面板 */
+.skill-panel{background:linear-gradient(180deg,#1a0d1f 0%,#141008 100%);border:1px solid rgba(155,89,182,.4);border-radius:16px;padding:16px;margin:12px 0}
+.skill-panel.night{background:linear-gradient(180deg,#0d1530 0%,#0a0f24 100%);border-color:rgba(93,173,226,.5)}
+.skill-panel.day{background:linear-gradient(180deg,#1f1508 0%,#1a1206 100%);border-color:rgba(243,156,18,.4);opacity:.85}
+.skill-panel h3{font-size:13px;color:#bb8fce;margin-bottom:8px;letter-spacing:2px;font-weight:700}
+.skill-panel.night h3{color:#9bb4ff}
+.skill-panel.day h3{color:#f39c12}
+.skill-panel .skill-desc{font-size:12px;color:#999;line-height:1.6;margin-bottom:12px}
+.btn-skill{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:2px;transition:all .2s;font-family:inherit;background:linear-gradient(135deg,#9b59b6,#8e44ad);color:#fff;box-shadow:0 4px 16px rgba(155,89,182,.35);display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
+.btn-skill:last-child{margin-bottom:0}
+.btn-skill:active{transform:scale(.97)}
+.btn-skill.night{background:linear-gradient(135deg,#3498db,#2c3e80);box-shadow:0 4px 16px rgba(52,152,219,.4)}
+.btn-skill.wolf{background:linear-gradient(135deg,#c0392b,#8e2a1e)}
+.btn-skill.antidote{background:linear-gradient(135deg,#2ecc71,#27ae60)}
+.btn-skill.poison{background:linear-gradient(135deg,#8e44ad,#6c3483)}
+.btn-skill.hunter{background:linear-gradient(135deg,#e67e22,#d35400)}
+.btn-skill.guard{background:linear-gradient(135deg,#3498db,#2874a6)}
+.btn-skill.used,.btn-skill.locked{background:#2a2a2a;color:#666;box-shadow:none;cursor:not-allowed}
+.btn-skill.used:active,.btn-skill.locked:active{transform:none}
+.skill-usage-info{background:rgba(155,89,182,.1);border:1px solid rgba(155,89,182,.3);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:#bb8fce;line-height:1.7}
+.skill-usage-info b{color:#d2b4de}
+.seer-result-box{background:linear-gradient(135deg,rgba(155,89,182,.2),rgba(155,89,182,.08));border:1px solid rgba(155,89,182,.5);border-radius:12px;padding:16px;margin-top:12px;text-align:center}
+.seer-result-box .srb-label{font-size:11px;color:#bb8fce;letter-spacing:2px;margin-bottom:6px}
+.seer-result-box .srb-target{font-size:13px;color:#fff;margin-bottom:8px}
+.seer-result-box .srb-result{font-size:22px;font-weight:800;letter-spacing:4px}
+.seer-result-box .srb-result.wolf{color:#ff6b6b}
+.seer-result-box .srb-result.good{color:#58d68d}
+
+/* 技能日志 */
+.skill-log{margin-top:8px}
+.skill-log-item{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:10px;padding:12px;margin-bottom:8px;font-size:12.5px;line-height:1.6}
+.skill-log-item .sl-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-weight:600;flex-wrap:wrap}
+.skill-log-item .sl-role{padding:2px 8px;border-radius:6px;font-size:11px;background:rgba(155,89,182,.2);color:#bb8fce}
+.skill-log-item .sl-target{color:var(--gold);font-weight:700}
+.skill-log-item .sl-time{color:#555;font-size:11px;margin-left:auto}
+.skill-log-item .sl-result{margin-top:6px;padding:6px 10px;background:rgba(155,89,182,.15);border-radius:6px;font-size:12px;color:#d2b4de}
+.skill-log-item .sl-result b{color:#ff6b6b}
+.skill-log-empty{color:#555;text-align:center;padding:16px;font-size:12px}
+
+/* 投票 */
+.vote-panel{background:var(--card);border:1px solid var(--red);border-radius:12px;padding:14px;margin:10px 0}
+.vote-panel h3{font-size:13px;color:var(--red);margin-bottom:8px;letter-spacing:2px;font-weight:700}
+.vote-progress{font-size:12px;color:#888;text-align:center;margin:8px 0}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;animation:pulse 1.5s infinite}
+.vote-result-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #222;font-size:14px}
+.vote-result-row:last-child{border-bottom:none}
+.vote-result-row .vr-count{color:var(--red);font-weight:700}
+
+/* 结果 */
+.result-panel{text-align:center;padding:24px;background:var(--card);border-radius:16px;margin:12px 0;border:1px solid var(--border)}
+.result-panel .result-title{font-size:22px;color:var(--gold);margin-bottom:12px;letter-spacing:6px;font-weight:700}
+.result-panel .result-detail{font-size:13px;color:#888;line-height:1.8}
+
+/* 玩家列表 */
+.waiting-player{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card-2);border-radius:10px;margin-bottom:8px}
+.waiting-player .wp-avatar{font-size:22px}
+.waiting-player .wp-name{flex:1;font-size:14px;font-weight:600}
+.waiting-player .wp-status{font-size:11px;padding:4px 12px;border-radius:10px;background:#1a3a1a;color:var(--green);font-weight:600}
+
+/* Toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(40,40,40,.98);color:#fff;padding:12px 24px;border-radius:24px;font-size:13px;z-index:9999;animation:fadeInOut 2.5s forwards;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 32px rgba(0,0,0,.6);border:1px solid #333}
+@keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(-10px)}10%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1}100%{opacity:0}}
+
+/* Modal */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .15s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-panel{background:#1a1a1a;border-radius:20px 20px 0 0;padding:22px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;animation:slideUp .25s;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-panel h3{color:var(--gold);text-align:center;margin-bottom:16px;font-size:16px;letter-spacing:2px;font-weight:700}
+.modal-list{max-height:52vh;overflow-y:auto;margin-bottom:12px}
+.modal-item{display:flex;align-items:center;gap:12px;padding:14px;background:#0d0d0d;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .15s;border:1px solid #222}
+.modal-item:active,.modal-item.selected{background:#1f1a0d;border-color:var(--gold)}
+.mi-avatar{font-size:20px}
+.mi-name{font-size:15px;color:#e0e0e0;flex:1}
+.mi-tag{font-size:11px;color:#888;padding:2px 8px;border-radius:6px;background:#1a1a1a}
+.mi-check{width:22px;height:22px;border-radius:50%;border:2px solid #444;display:flex;align-items:center;justify-content:center;font-size:12px;color:#0a0a0a}
+.modal-item.selected .mi-check{background:var(--gold);border-color:var(--gold)}
+
+/* 角色详情 */
+.role-detail{text-align:center;padding:16px 0}
+.role-detail .rd-icon{font-size:64px;line-height:1;margin-bottom:12px}
+.role-detail .rd-name{font-size:26px;color:var(--gold);letter-spacing:8px;font-weight:700;margin-bottom:6px}
+.role-detail .rd-team{display:inline-block;padding:4px 14px;border-radius:14px;font-size:12px;font-weight:600;margin-bottom:20px}
+.role-detail .rd-team.wolf{background:rgba(231,76,60,.15);color:#ff6b6b}
+.role-detail .rd-team.god{background:rgba(52,152,219,.15);color:#5dade2}
+.role-detail .rd-team.villager{background:rgba(46,204,113,.15);color:#58d68d}
+.role-detail .rd-section{text-align:left;background:#0d0d0d;border-radius:12px;padding:16px;margin-bottom:12px}
+.role-detail .rd-section h4{font-size:12px;color:var(--gold);margin-bottom:8px;letter-spacing:1px;font-weight:700}
+.role-detail .rd-section p{font-size:13px;color:#bbb;line-height:1.8}
+.role-detail .rd-skill{background:linear-gradient(135deg,rgba(155,89,182,.15),rgba(155,89,182,.05));border:1px solid rgba(155,89,182,.3)}
+.role-detail .rd-skill h4{color:#bb8fce}
+
+.safe-bottom{height:env(safe-area-inset-bottom,20px)}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+
+/* 夜晚/白天顶部光条 */
+.night-indicator{position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#2c3e80,#5dade2,#2c3e80);animation:pulse 3s infinite;z-index:100;display:none}
+.day-indicator{position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f39c12,#f1c40f,#f39c12);animation:pulse 3s infinite;z-index:100;display:none}
+body.night-mode .night-indicator{display:block}
+body.day-mode .day-indicator{display:block}
+
+/* 加载中 */
+.loading{text-align:center;padding:80px 20px}
+.loading .ld-icon{font-size:48px;animation:spin 2s linear infinite;display:inline-block}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.loading .ld-text{color:#888;font-size:14px;margin-top:16px;letter-spacing:2px}
+.loading .ld-sub{color:#555;font-size:12px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="night-indicator"></div>
+<div class="day-indicator"></div>
+<div class="app" id="app"></div>
+<script>
+'use strict';
+
+/* ============ 身份定义 ============ */
+const ROLE_DEFS = {
+  villager:{ name:'平民', icon:'👤', group:'villager', desc:'普通村民，白天参与讨论与投票，夜晚闭眼休息，没有特殊技能。', skill:null },
+  wolf:{ name:'狼人', icon:'🐺', group:'wolf', desc:'狼人阵营，夜晚可以刀杀一名玩家（可选择自己）。每轮可以使用一次技能。', skill:{ name:'刀杀', icon:'🔪', desc:'选择一名玩家进行刀杀（每轮一次，可选择自己）', targets:1, allowSelf:true, style:'wolf' } },
+  seer:{ name:'预言家', icon:'🔮', group:'god', desc:'好人阵营，每晚可以查验一名玩家的身份（好人/狼人），查验后可知晓对方身份。每轮可以使用一次技能。', skill:{ name:'查验', icon:'👁', desc:'选择一名玩家查验其身份（每轮一次）', targets:1, revealRole:true, style:'night' } },
+  witch:{ name:'女巫', icon:'🧪', group:'god', desc:'好人阵营，拥有一瓶解药和一瓶毒药。解药可以救活被刀的玩家，毒药可以毒杀一名玩家。每瓶药仅可使用一次。', skill:{ name:'用药', icon:'⚗️', desc:'解药或毒药（各一次）', targets:1, allowSelf:true, special:'witch' } },
+  hunter:{ name:'猎人', icon:'🏹', group:'god', desc:'好人阵营，被淘汰时可以开枪带走一名玩家（仅在主持人标记出局后可用）。', skill:{ name:'开枪', icon:'💥', desc:'被淘汰时选择一名玩家开枪带走', targets:1, special:'hunter' } },
+  guard:{ name:'守卫', icon:'🛡️', group:'god', desc:'好人阵营，每晚可以守护一名玩家（可选择自己）。不限总次数，但不能连续两轮守护同一名玩家。', skill:{ name:'守护', icon:'🛡️', desc:'选择一名玩家进行守护（不能连守同一人）', targets:1, allowSelf:true, style:'guard' } },
+  idiot:{ name:'白痴', icon:'🤡', group:'god', desc:'好人阵营，被投票出局时翻牌可以不死，但会失去投票权。', skill:null },
+  cupid:{ name:'丘比特', icon:'💘', group:'god', desc:'第一晚可以连接两名玩家成为情侣，情侣中一人死亡另一人殉情。', skill:{ name:'连线', icon:'💕', desc:'选择两名玩家连成情侣', targets:2, style:'night' } }
+};
+const TEAM_LABEL = { wolf:'狼人阵营', god:'神职阵营', villager:'村民阵营' };
+
+/* ============ 全局状态 ============ */
+let peer = null;
+let conns = {};
+let hostConn = null;
+let isHost = false;
+let myId = null;
+let room = null;
+let screen = 'home';
+let joiningRoom = false;
+let rolePickerOpen = false;
+let drawingRole = false;
+let joinStateTimer = null;
+
+/* ============ 工具 ============ */
+function $(id){ return document.getElementById(id); }
+function genCode(){ const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<6;i++) r+=c[Math.floor(Math.random()*c.length)]; return r; }
+function toast(msg, ms){ ms=ms||2500; const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>{try{t.remove()}catch(e){}},ms); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtTime(ts){ const d=new Date(ts); const p=n=>n<10?'0'+n:n; return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds()); }
+
+/* 剪贴板 */
+function copyText(text, okMsg){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(() => {
+      if(okMsg) toast(okMsg);
+    }).catch(() => fallbackCopy(text, okMsg));
+  } else {
+    fallbackCopy(text, okMsg);
+  }
+}
+function fallbackCopy(text, okMsg){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand('copy'); if(okMsg) toast(okMsg); }
+  catch(e){ toast('复制失败'); }
+  document.body.removeChild(ta);
+}
+
+/* 分享 */
+async function shareGameLink(){
+  if(!room) return;
+  const url = location.origin + location.pathname + '?room=' + room.code;
+  const shareData = {
+    title: '狼人杀 · 房间 ' + room.code,
+    text: '加入狼人杀房间，房间码：' + room.code,
+    url: url
+  };
+  if(navigator.share){
+    try{
+      await navigator.share(shareData);
+    }catch(e){
+      if(e && e.name !== 'AbortError') copyText(url, '已复制游戏链接');
+    }
+  } else {
+    copyText(url, '已复制游戏链接');
+  }
+}
+
+/* ============ Peer 配置 ============ */
+function getPeerServerConfig(){ try{ const s=localStorage.getItem('lrs_peerserver'); return s?JSON.parse(s):null; }catch(e){ return null; } }
+function buildPeerOptions(){
+  const opts = { debug:0 };
+  const custom = getPeerServerConfig();
+  if(custom && custom.host){
+    opts.host = custom.host; opts.port = custom.port||443;
+    opts.path = custom.path||'/'; opts.secure = custom.secure!==false; opts.key='peerjs';
+  }
+  opts.config = {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' },
+      { urls: 'turn:openrelay.metered.ca:80', username:'openrelayproject', credential:'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443', username:'openrelayproject', credential:'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject' }
+    ],
+    iceCandidatePoolSize: 10
+  };
+  return opts;
+}
+
+/* ============ 主持人房间持久化 ============ */
+function saveHostRoom(){
+  if(!isHost || !room) return;
+  try{ localStorage.setItem('lrs_hostroom', JSON.stringify({ code:room.code, state:room, savedAt:Date.now() })); }
+  catch(e){ console.warn('保存失败', e); }
+}
+function loadHostRoom(){ try{ const s=localStorage.getItem('lrs_hostroom'); return s?JSON.parse(s):null; }catch(e){ return null; } }
+
+/* ============ 阶段主题切换 ============ */
+function updateBodyTheme(){
+  document.body.classList.remove('night-mode','day-mode');
+  if(!room) return;
+  if(room.phase === 'night') document.body.classList.add('night-mode');
+  else if(room.phase === 'day') document.body.classList.add('day-mode');
+}
+
+/* ============ 首页 ============ */
+function renderHome(app){
+  const savedName = localStorage.getItem('lrs_name') || '';
+  const savedHost = loadHostRoom();
+  document.body.classList.remove('night-mode','day-mode');
+
+  app.innerHTML = `
+    <div class="home-logo">
+      <div class="logo-icon">🐺</div>
+      <h1>狼 人 杀</h1>
+      <div class="sub">经典多人推理游戏 · 在线联机版</div>
+    </div>
+    <div class="intro-card">
+      <h2>游戏简介</h2>
+      <p>狼人杀是一款多人参与的社交推理游戏。玩家被随机分配为<b style="color:#c9a84c">狼人</b>、<b style="color:#5dade2">神职</b>或<b style="color:#58d68d">平民</b>三种阵营。狼人夜晚杀人，好人白天投票放逐狼人。</p>
+      <p>游戏考验逻辑推理、语言表达与心理博弈，是朋友聚会、线上开黑的绝佳选择。</p>
+      <div class="tags"><span>6-12 人本</span><span>30-60 分钟</span><span>推理对抗</span><span>团队协作</span><span>逻辑博弈</span></div>
+    </div>
+    <div class="two-col">
+      <div class="panel host-panel">
+        <h2>👑 我是主持人</h2>
+        <div class="desc">创建房间后你将拥有 <strong>操作台权限</strong>：控制天黑/天亮、判定生死、统计投票、管理游戏流程。<br><br><strong>提示：</strong>主持人不在玩家列表中，退房后可一键恢复房间。</div>
+        <label class="field-label">主持人名字</label>
+        <input class="input" id="hostName" maxlength="10" placeholder="请输入你的名字" autocomplete="off" value="${esc(savedName)}">
+        <button class="btn btn-orange" id="btnCreate">创建房间</button>
+        ${savedHost ? `
+          <button class="btn btn-outline" id="btnReturn" style="margin-top:10px">🔄 返回上次创建的房间</button>
+          <div style="text-align:center;color:#666;font-size:11px;margin-top:10px">
+            上次房间：<b style="color:#c9a84c;font-family:monospace;letter-spacing:2px">${esc(savedHost.code)}</b>
+          </div>
+        ` : ''}
+      </div>
+      <div class="panel player-panel">
+        <h2>🎭 我是玩家</h2>
+        <div class="desc">输入主持人提供的 <b style="color:#e67e22">6 位房间码</b> 加入游戏。<br><br><b style="color:#f39c12">重连提示：</b>用<b>相同房间码和名字</b>重新加入，会自动恢复身份。</div>
+        <label class="field-label">房间码</label>
+        <input class="input code-input" id="joinCode" maxlength="6" placeholder="XXXXXX" autocomplete="off">
+        <label class="field-label">你的名字</label>
+        <input class="input" id="joinName" maxlength="10" placeholder="请输入昵称" autocomplete="off" value="${esc(savedName)}">
+        <button class="btn btn-orange" id="btnJoin" style="margin-top:6px">加入房间</button>
+      </div>
+    </div>
+    <div class="adv-toggle" id="advToggle"><span>⚙ 高级设置（网络服务器）</span><span id="advArrow" style="font-size:10px">▼</span></div>
+    <div class="adv-panel hidden" id="advPanel">
+      <div class="hint">默认为 PeerJS 官方公共服务器 + 免费 TURN 中继。如连接不稳定，可填入自建服务器。</div>
+      <input class="input" id="peerHost" placeholder="服务器地址" autocomplete="off">
+      <input class="input" id="peerPort" type="number" placeholder="端口（默认 443）" autocomplete="off">
+      <input class="input" id="peerPath" placeholder="路径（默认 /）" autocomplete="off">
+      <button class="btn btn-outline btn-sm" id="btnSaveAdv" style="width:100%;margin-bottom:8px">保存设置</button>
+      <button class="btn btn-ghost" id="btnClearAdv" style="width:100%">重置为默认</button>
+    </div>
+    <div class="home-footnote">ⓘ 本游戏需要联网。主持人创建房间后，请把房间码或二维码发给其他玩家。</div>
+    <div class="safe-bottom"></div>
+  `;
+
+  try{
+    const params = new URLSearchParams(location.search);
+    const rc = params.get('room');
+    if(rc){ $('joinCode').value = rc.toUpperCase().slice(0,6); $('joinName').focus(); }
+  }catch(e){}
+
+  const adv = getPeerServerConfig();
+  if(adv && adv.host){
+    $('peerHost').value = adv.host || '';
+    $('peerPort').value = adv.port || '';
+    $('peerPath').value = adv.path || '';
+  }
+
+  $('btnCreate').onclick = doCreateRoom;
+  $('btnJoin').onclick = doJoinRoom;
+  if($('btnReturn')) $('btnReturn').onclick = doReturnLastRoom;
+
+  $('hostName').addEventListener('keydown', e => { if(e.key === 'Enter') doCreateRoom(); });
+  $('joinCode').addEventListener('keydown', e => { if(e.key === 'Enter') $('joinName').focus(); });
+  $('joinName').addEventListener('keydown', e => { if(e.key === 'Enter') doJoinRoom(); });
+
+  $('advToggle').onclick = () => {
+    const p = $('advPanel'); p.classList.toggle('hidden');
+    $('advArrow').textContent = p.classList.contains('hidden') ? '▼' : '▲';
+  };
+  $('btnSaveAdv').onclick = () => {
+    const host = $('peerHost').value.trim();
+    const port = $('peerPort').value.trim();
+    const path = $('peerPath').value.trim();
+    if(!host){ localStorage.removeItem('lrs_peerserver'); toast('已重置为默认'); return; }
+    localStorage.setItem('lrs_peerserver', JSON.stringify({ host, port: port?parseInt(port,10):443, path: path||'/', secure:true }));
+    toast('已保存');
+  };
+  $('btnClearAdv').onclick = () => {
+    localStorage.removeItem('lrs_peerserver');
+    $('peerHost').value=''; $('peerPort').value=''; $('peerPath').value='';
+    toast('已重置为默认');
+  };
+  $('joinCode').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
+}
+
+/* ============ 创建房间 ============ */
+async function doCreateRoom(){
+  const name = ($('hostName').value || '').trim();
+  if(!name){ toast('请输入名字'); $('hostName').focus(); return; }
+  if(typeof Peer === 'undefined'){ toast('PeerJS 加载失败'); return; }
+  localStorage.setItem('lrs_name', name);
+
+  const btn = $('btnCreate');
+  btn.disabled = true; btn.textContent = '正在创建...';
+
+  let success = false, lastErr = null;
+  for(let attempt = 0; attempt < 6 && !success; attempt++){
+    const code = genCode();
+    try{
+      const p = await createHostPeer(code);
+      peer = p; isHost = true;
+      myId = 'lrs-' + code;
+      room = initRoomState(code, name);
+      setupHostHandlers();
+      screen = 'room';
+      saveHostRoom();
+      try{ history.replaceState({}, '', location.pathname + '?room=' + code); }catch(e){}
+      render();
+      toast('房间已创建：' + code);
+      success = true;
+    }catch(err){
+      lastErr = err;
+      if(err && err.type === 'unavailable-id') continue;
+      break;
+    }
+  }
+  if(!success){
+    btn.disabled = false; btn.textContent = '创建房间';
+    let msg = '创建失败';
+    if(lastErr){
+      if(lastErr.type === 'unavailable-id') msg = '房间码冲突，请重试';
+      else if(lastErr.type === 'network') msg = '网络连接失败';
+      else if(lastErr.type === 'server-error') msg = '服务器繁忙';
+      else if(lastErr.message === 'timeout') msg = '连接超时';
+      else msg = '创建失败：' + (lastErr.message || lastErr.type || '未知错误');
+    }
+    toast(msg, 4000);
+  }
+}
+
+/* ============ 返回上次房间 ============ */
+async function doReturnLastRoom(){
+  const saved = loadHostRoom();
+  if(!saved || !saved.code || !saved.state){ toast('没有历史房间'); return; }
+  if(typeof Peer === 'undefined'){ toast('PeerJS 加载失败'); return; }
+
+  const btn = $('btnReturn');
+  btn.disabled = true; btn.textContent = '恢复中...';
+  const code = saved.code;
+  let lastErr = null, ok = false;
+  for(let attempt = 0; attempt < 3 && !ok; attempt++){
+    try{
+      const p = await createHostPeer(code);
+      peer = p; isHost = true;
+      myId = 'lrs-' + code;
+      room = saved.state;
+      if(!room.skillUsages) room.skillUsages = [];
+      if(typeof room.wolfCount !== 'number') room.wolfCount = 0;
+      if(!room.round) room.round = 1;
+      // 补全玩家新增字段
+      Object.values(room.players || {}).forEach(p => {
+        if(typeof p.witchAntidoteUsed !== 'boolean') p.witchAntidoteUsed = false;
+        if(typeof p.witchPoisonUsed !== 'boolean') p.witchPoisonUsed = false;
+        if(typeof p.hunterCanShoot !== 'boolean') p.hunterCanShoot = false;
+        if(typeof p.lastGuardedId === 'undefined') p.lastGuardedId = null;
+        if(typeof p.lastGuardedRound !== 'number') p.lastGuardedRound = 0;
+        if(typeof p.skillUsedThisRound !== 'boolean') p.skillUsedThisRound = false;
+      });
+      setupHostHandlers();
+      screen = 'room';
+      saveHostRoom();
+      try{ history.replaceState({}, '', location.pathname + '?room=' + code); }catch(e){}
+      render();
+      toast('房间已恢复：' + code, 3500);
+      ok = true;
+    }catch(err){
+      lastErr = err;
+      await new Promise(r => setTimeout(r, 800));
+    }
+  }
+  if(!ok){
+    btn.disabled = false; btn.textContent = '🔄 返回上次创建的房间';
+    let msg = '恢复失败';
+    if(lastErr){
+      if(lastErr.type === 'unavailable-id') msg = '房间码仍被占用，请稍后再试';
+      else if(lastErr.type === 'network') msg = '网络连接失败';
+      else msg = '恢复失败：' + (lastErr.message || lastErr.type || '未知错误');
+    }
+    toast(msg, 4000);
+  }
+}
+
+function createHostPeer(code){
+  return new Promise((resolve, reject) => {
+    let settled = false, p;
+    try{ p = new Peer('lrs-' + code, buildPeerOptions()); }
+    catch(e){ reject(e); return; }
+    const timer = setTimeout(() => {
+      if(settled) return;
+      settled = true;
+      try{ p.destroy(); }catch(e){}
+      const err = new Error('timeout'); err.type = 'timeout';
+      reject(err);
+    }, 15000);
+    p.on('open', () => { if(settled) return; settled = true; clearTimeout(timer); resolve(p); });
+    p.on('error', (err) => {
+      if(settled){ console.warn('Host peer error:', err); return; }
+      settled = true; clearTimeout(timer);
+      try{ p.destroy(); }catch(e){}
+      reject(err);
+    });
+  });
+}
+
+function initRoomState(code, hostName){
+  return {
+    code,
+    hostId: 'lrs-' + code,
+    hostName,
+    phase: 'waiting',
+    maxPlayers: 12,
+    wolfCount: 0,
+    selectedRoles: ['wolf','seer','witch','hunter'],
+    players: {},
+    votes: {},
+    voteRevealed: false,
+    round: 1,
+    createdAt: Date.now(),
+    skillUsages: []
+  };
+}
+
+/* ============ 主持人连接处理 ============ */
+function setupHostHandlers(){
+  peer.on('connection', (conn) => {
+    conn.on('open', () => { conns[conn.peer] = conn; });
+    conn.on('data', (data) => {
+      try{ handleClientMessage(conn.peer, data); }
+      catch(e){ console.warn('消息处理错误', e); }
+    });
+    conn.on('close', () => { delete conns[conn.peer]; });
+    conn.on('error', (err) => console.warn('连接错误', err));
+  });
+  peer.on('disconnected', () => { try{ peer.reconnect(); }catch(e){} });
+  peer.on('error', (err) => {
+    console.warn('Host peer error:', err);
+    if(err && (err.type === 'network' || err.type === 'server-error')) toast('网络异常，正在重连...');
+  });
+}
+
+function handleClientMessage(peerId, data){
+  if(!room || !data || typeof data !== 'object') return;
+
+  if(data.type === 'join'){
+    const name = String(data.name || '玩家').slice(0, 10).trim();
+    if(!name){ sendTo(peerId, { type:'error', msg:'名字不能为空' }); return; }
+    if(room.hostName && name === room.hostName){
+      sendTo(peerId, { type:'error', msg:'该名字已被主持人占用，请换一个' });
+      return;
+    }
+
+    const existing = Object.values(room.players).find(p => p.name === name);
+    if(existing){
+      const oldId = existing.id;
+      if(oldId !== peerId){
+        delete room.players[oldId];
+        if(room.votes && room.votes[oldId]){
+          room.votes[peerId] = room.votes[oldId];
+          delete room.votes[oldId];
+        }
+        (room.skillUsages || []).forEach(u => { if(u.playerId === oldId) u.playerId = peerId; });
+        existing.id = peerId;
+        room.players[peerId] = existing;
+      }
+      broadcast();
+      sendTo(peerId, { type:'state', state: room });
+      sendTo(peerId, { type:'restored', msg:'欢迎回来！' });
+      toast(name + ' 重新连接');
+      return;
+    }
+
+    if(room.phase !== 'waiting'){
+      sendTo(peerId, { type:'error', msg:'游戏已开始，无法加入' });
+      return;
+    }
+    if(Object.keys(room.players).length >= room.maxPlayers){
+      sendTo(peerId, { type:'error', msg:'房间已满' });
+      return;
+    }
+    room.players[peerId] = {
+      id: peerId, name, role:null, alive:true,
+      skillUsedThisRound:false,
+      witchAntidoteUsed:false, witchPoisonUsed:false,
+      hunterCanShoot:false,
+      lastGuardedId:null, lastGuardedRound:0,
+      joinedAt:Date.now()
+    };
+    broadcast();
+    toast(name + ' 加入了房间');
+  }
+
+  else if(data.type === 'drawRole'){
+    if(room.phase !== 'selecting') return;
+    const p = room.players[peerId];
+    if(!p || p.role) return;
+    drawRandomRole(peerId);
+    broadcast();
+  }
+
+  else if(data.type === 'vote'){
+    if(room.phase !== 'voting') return;
+    const p = room.players[peerId];
+    if(!p || !p.alive) return;
+    const target = room.players[data.targetId];
+    if(!target || !target.alive || data.targetId === peerId) return;
+    room.votes[peerId] = data.targetId;
+    broadcast();
+  }
+
+  else if(data.type === 'useSkill'){
+    handleSkillUse(peerId, data);
+  }
+
+  else if(data.type === 'leave'){
+    delete room.players[peerId];
+    delete room.votes[peerId];
+    broadcast();
+  }
+}
+
+function calcWolfCount(n){
+  if(n <= 5) return 1;
+  if(n <= 8) return 2;
+  if(n <= 11) return 3;
+  return 4;
+}
+function getEffectiveWolfCount(){
+  if(!room) return 2;
+  if(typeof room.wolfCount === 'number' && room.wolfCount > 0) return room.wolfCount;
+  return calcWolfCount(Object.keys(room.players).length);
+}
+
+function drawRandomRole(peerId){
+  const sel = room.selectedRoles || [];
+  const wolfCount = getEffectiveWolfCount();
+  const pool = [];
+  if(sel.indexOf('wolf') >= 0){
+    for(let i=0; i<wolfCount; i++) pool.push('wolf');
+  }
+  sel.forEach(r => { if(r !== 'wolf') pool.push(r); });
+
+  const taken = {};
+  Object.values(room.players).forEach(p => {
+    if(p.role && p.id !== peerId) taken[p.role] = (taken[p.role] || 0) + 1;
+  });
+
+  const available = [];
+  const usedInPool = {};
+  pool.forEach(r => {
+    usedInPool[r] = (usedInPool[r] || 0) + 1;
+    if((taken[r] || 0) < usedInPool[r]) available.push(r);
+  });
+
+  const role = available.length > 0
+    ? available[Math.floor(Math.random() * available.length)]
+    : 'villager';
+
+  room.players[peerId].role = role;
+  room.players[peerId].skillUsedThisRound = false;
+  return role;
+}
+
+/* ============ 技能使用处理 ============ */
+function handleSkillUse(peerId, data){
+  if(!room) return;
+  const p = room.players[peerId];
+  if(!p || !p.role){ sendTo(peerId, { type:'error', msg:'未抽到身份' }); return; }
+  const rd = ROLE_DEFS[p.role];
+  if(!rd || !rd.skill){ sendTo(peerId, { type:'error', msg:'该身份没有技能' }); return; }
+
+  const skillType = data.skillType || 'default';  // 女巫: 'antidote' | 'poison'
+  const targets = Array.isArray(data.targets) ? data.targets : [];
+  const needCount = rd.skill.targets || 1;
+  if(targets.length !== needCount){
+    sendTo(peerId, { type:'error', msg:'目标数量不正确' });
+    return;
+  }
+
+  // ====== 女巫特殊处理 ======
+  if(p.role === 'witch'){
+    if(skillType === 'antidote'){
+      if(p.witchAntidoteUsed){ sendTo(peerId, { type:'error', msg:'解药已使用过' }); return; }
+    } else if(skillType === 'poison'){
+      if(p.witchPoisonUsed){ sendTo(peerId, { type:'error', msg:'毒药已使用过' }); return; }
+    } else {
+      sendTo(peerId, { type:'error', msg:'请选择解药或毒药' }); return;
+    }
+    // 阶段检查
+    if(room.phase !== 'night'){ sendTo(peerId, { type:'error', msg:'现在不是黑夜，无法使用技能' }); return; }
+    if(!p.alive){ sendTo(peerId, { type:'error', msg:'你已被淘汰，无法使用技能' }); return; }
+
+    const names = [];
+    for(const tid of targets){
+      const t = room.players[tid];
+      if(!t){ sendTo(peerId, { type:'error', msg:'目标不存在' }); return; }
+      names.push(t.name);
+    }
+
+    if(skillType === 'antidote') p.witchAntidoteUsed = true;
+    else p.witchPoisonUsed = true;
+
+    const skillName = skillType === 'antidote' ? '解药' : '毒药';
+    const skillIcon = skillType === 'antidote' ? '🧪' : '☠️';
+
+    room.skillUsages.push({
+      playerId: peerId, playerName: p.name,
+      role: p.role, roleName: rd.name,
+      skillName: skillName, skillIcon: skillIcon,
+      targetIds: targets, targetNames: names,
+      round: room.round,
+      timestamp: Date.now()
+    });
+    broadcast();
+    sendTo(peerId, { type:'skillSuccess', msg:skillName + '使用成功' });
+    return;
+  }
+
+  // ====== 猎人特殊处理 ======
+  if(p.role === 'hunter'){
+    if(!p.hunterCanShoot){ sendTo(peerId, { type:'error', msg:'只有在被淘汰后才能开枪' }); return; }
+    if(p.skillUsedThisRound){ sendTo(peerId, { type:'error', msg:'技能已使用过' }); return; }
+    if(p.alive){ sendTo(peerId, { type:'error', msg:'只有被淘汰后才能开枪' }); return; }
+
+    const names = [];
+    for(const tid of targets){
+      const t = room.players[tid];
+      if(!t){ sendTo(peerId, { type:'error', msg:'目标不存在' }); return; }
+      names.push(t.name);
+    }
+    p.skillUsedThisRound = true;
+    p.hunterCanShoot = false;  // 用掉后禁用
+
+    room.skillUsages.push({
+      playerId: peerId, playerName: p.name,
+      role: p.role, roleName: rd.name,
+      skillName: rd.skill.name, skillIcon: rd.skill.icon,
+      targetIds: targets, targetNames: names,
+      round: room.round,
+      timestamp: Date.now()
+    });
+    broadcast();
+    sendTo(peerId, { type:'skillSuccess', msg:'开枪成功' });
+    return;
+  }
+
+  // ====== 通用检查（狼人/预言家/守卫/丘比特）======
+  if(!p.alive){ sendTo(peerId, { type:'error', msg:'你已被淘汰，无法使用技能' }); return; }
+  if(room.phase !== 'night'){ sendTo(peerId, { type:'error', msg:'现在不是黑夜，无法使用技能' }); return; }
+  if(p.skillUsedThisRound){ sendTo(peerId, { type:'error', msg:'本轮技能已使用过' }); return; }
+
+  // 守卫：不能连续两轮守护同一玩家
+  if(p.role === 'guard'){
+    const tid = targets[0];
+    if(p.lastGuardedId === tid && p.lastGuardedRound === room.round - 1){
+      sendTo(peerId, { type:'error', msg:'不能连续两轮守护同一名玩家' });
+      return;
+    }
+  }
+
+  const names = [];
+  const targetDetails = [];
+  for(const tid of targets){
+    const t = room.players[tid];
+    if(!t){ sendTo(peerId, { type:'error', msg:'目标不存在' }); return; }
+    names.push(t.name);
+    if(rd.skill.revealRole && t.role){
+      targetDetails.push({
+        id: tid, name: t.name,
+        role: t.role,
+        roleName: ROLE_DEFS[t.role] ? ROLE_DEFS[t.role].name : '未知',
+        group: ROLE_DEFS[t.role] ? ROLE_DEFS[t.role].group : 'villager'
+      });
+    }
+  }
+
+  p.skillUsedThisRound = true;
+  if(p.role === 'guard'){
+    p.lastGuardedId = targets[0];
+    p.lastGuardedRound = room.round;
+  }
+
+  const usageEntry = {
+    playerId: peerId, playerName: p.name,
+    role: p.role, roleName: rd.name,
+    skillName: rd.skill.name, skillIcon: rd.skill.icon,
+    targetIds: targets, targetNames: names,
+    round: room.round,
+    timestamp: Date.now()
+  };
+
+  if(rd.skill.revealRole && targetDetails.length > 0){
+    usageEntry.revealResult = targetDetails;
+    sendTo(peerId, {
+      type: 'seerResult',
+      targetName: targetDetails[0].name,
+      roleName: targetDetails[0].roleName,
+      roleGroup: targetDetails[0].group,
+      roleIcon: ROLE_DEFS[targetDetails[0].role] ? ROLE_DEFS[targetDetails[0].role].icon : '❓'
+    });
+  }
+
+  room.skillUsages.push(usageEntry);
+  broadcast();
+  sendTo(peerId, { type:'skillSuccess', msg:'技能使用成功' });
+}
+
+function sendTo(peerId, data){
+  const c = conns[peerId];
+  if(c && c.open){ try{ c.send(data); }catch(e){ console.warn(e); } }
+}
+
+function broadcast(){
+  if(!room) return;
+  saveHostRoom();
+  const payload = { type:'state', state: room };
+  Object.keys(conns).forEach(pid => {
+    const c = conns[pid];
+    if(c && c.open){ try{ c.send(payload); }catch(e){ console.warn(e); } }
+  });
+  render();
+}
+
+/* ============ 加入房间 ============ */
+async function doJoinRoom(){
+  if(joiningRoom) return;
+  const code = $('joinCode').value.trim().toUpperCase();
+  const name = $('joinName').value.trim();
+  if(!code){ toast('请输入房间码'); $('joinCode').focus(); return; }
+  if(code.length !== 6){ toast('房间码为 6 位'); return; }
+  if(!name){ toast('请输入名字'); $('joinName').focus(); return; }
+  if(typeof Peer === 'undefined'){ toast('PeerJS 加载失败'); return; }
+
+  localStorage.setItem('lrs_name', name);
+  joiningRoom = true;
+  const btn = $('btnJoin');
+  btn.disabled = true; btn.textContent = '连接中...';
+
+  function reset(){
+    joiningRoom = false;
+    btn.disabled = false; btn.textContent = '加入房间';
+    if(joinStateTimer){ clearTimeout(joinStateTimer); joinStateTimer = null; }
+    if(peer){ try{ peer.destroy(); }catch(e){} peer = null; }
+  }
+
+  try{
+    const p = await new Promise((resolve, reject) => {
+      let pp;
+      try{ pp = new Peer(buildPeerOptions()); }catch(e){ reject(e); return; }
+      let settled = false;
+      const timer = setTimeout(() => {
+        if(settled) return;
+        settled = true;
+        try{ pp.destroy(); }catch(e){}
+        const err = new Error('timeout'); err.type = 'timeout';
+        reject(err);
+      }, 15000);
+      pp.on('open', () => { if(settled) return; settled = true; clearTimeout(timer); resolve(pp); });
+      pp.on('error', (err) => {
+        if(settled) return;
+        settled = true; clearTimeout(timer);
+        try{ pp.destroy(); }catch(e){}
+        reject(err);
+      });
+    });
+
+    peer = p; myId = p.id; isHost = false;
+    const conn = p.connect('lrs-' + code, { reliable: true });
+    let opened = false;
+    const connTimer = setTimeout(() => {
+      if(opened) return;
+      try{ conn.close(); }catch(e){}
+      toast('连接超时，请检查房间码', 4000);
+      reset();
+    }, 15000);
+
+    conn.on('open', () => {
+      opened = true; clearTimeout(connTimer);
+      hostConn = conn;
+      // 【关键修复】不重置 joiningRoom，等待收到 state 再重置
+      btn.textContent = '同步中...';
+      try{ conn.send({ type:'join', name }); }catch(e){}
+      screen = 'room';
+      render();
+      // 10 秒内未收到 state，提示失败
+      joinStateTimer = setTimeout(() => {
+        if(!room){
+          toast('同步房间状态超时，请重试', 3500);
+          reset();
+          screen = 'home';
+          render();
+        }
+      }, 10000);
+    });
+    conn.on('data', (data) => { try{ handleHostMessage(data); }catch(e){ console.warn(e); } });
+    conn.on('close', () => {
+      if(screen === 'room' && !isHost){
+        toast('与主持人断开连接，可用相同名字重连', 4000);
+        cleanup(); screen = 'home';
+        try{ history.replaceState({}, '', location.pathname); }catch(e){}
+        render();
+      }
+    });
+    conn.on('error', (err) => console.warn('数据通道错误', err));
+
+    p.on('error', (err) => {
+      console.warn('Peer error:', err);
+      if(err && err.type === 'peer-unavailable' && !opened){
+        clearTimeout(connTimer);
+        toast('房间不存在或主持人未上线', 4000);
+        reset();
+      } else if(err && err.type === 'network' && !opened){
+        clearTimeout(connTimer);
+        toast('网络错误，请稍后重试', 3500);
+        reset();
+      }
+    });
+
+  }catch(err){
+    console.error(err);
+    let msg = '连接失败';
+    if(err){
+      if(err.type === 'timeout') msg = '连接超时';
+      else if(err.type === 'network') msg = '网络错误';
+      else if(err.type === 'server-error') msg = '服务器繁忙';
+      else msg = '连接失败：' + (err.message || err.type || '未知错误');
+    }
+    toast(msg, 3500);
+    reset();
+  }
+}
+
+function handleHostMessage(data){
+  if(!data || typeof data !== 'object') return;
+  if(data.type === 'state'){
+    room = data.state;
+    if(!room.skillUsages) room.skillUsages = [];
+    // 【关键修复】收到 state，玩家加入完成
+    joiningRoom = false;
+    if(joinStateTimer){ clearTimeout(joinStateTimer); joinStateTimer = null; }
+    updateBodyTheme();
+    render();
+  } else if(data.type === 'restored'){
+    toast(data.msg || '欢迎回来！', 3000);
+  } else if(data.type === 'seerResult'){
+    showSeerResult(data);
+  } else if(data.type === 'skillSuccess'){
+    toast(data.msg || '使用成功', 2000);
+  } else if(data.type === 'error'){
+    toast(data.msg || '出错了', 3000);
+    if(data.msg && (data.msg.indexOf('房间') >= 0 || data.msg.indexOf('开始') >= 0)){
+      cleanup(); screen = 'home';
+      try{ history.replaceState({}, '', location.pathname); }catch(e){}
+      render();
+    }
+  }
+}
+
+function cleanup(){
+  if(hostConn){ try{ hostConn.close(); }catch(e){} hostConn = null; }
+  if(peer){ try{ peer.destroy(); }catch(e){} peer = null; }
+  if(joinStateTimer){ clearTimeout(joinStateTimer); joinStateTimer = null; }
+  conns = {}; room = null; isHost = false; myId = null;
+  joiningRoom = false; rolePickerOpen = false; drawingRole = false;
+  document.body.classList.remove('night-mode','day-mode');
+}
+
+/* ============ 主持人操作 ============ */
+function hostSetMaxPlayers(n){
+  if(!isHost || !room) return;
+  const num = parseInt(n, 10);
+  if(isNaN(num)) return;
+  room.maxPlayers = num;
+  broadcast();
+}
+function hostSetWolfCount(n){
+  if(!isHost || !room) return;
+  const num = parseInt(n, 10);
+  room.wolfCount = isNaN(num) ? 0 : num;
+  broadcast();
+  toast('狼人数量：' + (num === 0 ? '自动' : num + ' 只'));
+}
+function hostToggleRole(rk){
+  if(!isHost || !room) return;
+  const idx = room.selectedRoles.indexOf(rk);
+  if(idx >= 0) room.selectedRoles.splice(idx, 1);
+  else room.selectedRoles.push(rk);
+  broadcast();
+}
+
+function resetPlayerRoundState(p){
+  p.skillUsedThisRound = false;
+}
+function resetPlayerGameState(p){
+  p.role = null; p.alive = true;
+  p.skillUsedThisRound = false;
+  p.witchAntidoteUsed = false;
+  p.witchPoisonUsed = false;
+  p.hunterCanShoot = false;
+  p.lastGuardedId = null;
+  p.lastGuardedRound = 0;
+}
+
+function hostStartGame(){
+  if(!isHost || !room) return;
+  const count = Object.keys(room.players).length;
+  if(count < 2){ toast('至少需要 2 名玩家'); return; }
+  if(room.selectedRoles.length === 0){ toast('请至少选择一个身份牌'); return; }
+
+  room.phase = 'selecting';
+  room.votes = {};
+  room.voteRevealed = false;
+  room.skillUsages = [];
+  room.round = 1;
+  Object.values(room.players).forEach(p => resetPlayerGameState(p));
+  broadcast();
+  toast('游戏开始，请各位玩家抽取身份');
+}
+
+function hostStartNight(){
+  if(!isHost || !room) return;
+  if(room.phase === 'night'){ toast('已经是黑夜阶段'); return; }
+  if(room.phase === 'waiting'){ toast('请先开始游戏'); return; }
+
+  if(room.phase === 'selecting'){
+    room.round = 1;
+  } else {
+    room.round = (room.round || 1) + 1;
+  }
+  room.phase = 'night';
+  // 重置"本轮"状态（但女巫药水、守卫历史记录等整局状态保留）
+  Object.values(room.players).forEach(p => resetPlayerRoundState(p));
+  broadcast();
+  toast('🌙 天黑请闭眼 · 技能已开启 · 第 ' + room.round + ' 轮');
+}
+
+function hostStartDay(){
+  if(!isHost || !room) return;
+  if(room.phase === 'day'){ toast('已经是白天阶段'); return; }
+  if(room.phase === 'waiting' || room.phase === 'selecting'){
+    toast('请先进入黑夜阶段'); return;
+  }
+  room.phase = 'day';
+  broadcast();
+  toast('☀️ 天亮请睁眼 · 技能已关闭');
+}
+
+function hostStartVoting(){
+  if(!isHost || !room) return;
+  if(room.phase === 'waiting' || room.phase === 'selecting'){
+    toast('请先进入游戏流程'); return;
+  }
+  Object.values(room.players).forEach(p => { if(!p.role) p.role = 'villager'; });
+  room.phase = 'voting';
+  room.votes = {};
+  room.voteRevealed = false;
+  broadcast();
+  toast('🗳 投票阶段开始');
+}
+
+function hostRevealVotes(){ if(!isHost || !room) return; room.voteRevealed = true; broadcast(); }
+function hostEndRound(){
+  if(!isHost || !room) return;
+  if(room.phase === 'waiting'){ toast('还没开始游戏'); return; }
+  room.phase = 'ended';
+  broadcast();
+  toast('🏁 本轮结束');
+}
+function hostRestart(){
+  if(!isHost || !room) return;
+  Object.values(room.players).forEach(p => resetPlayerGameState(p));
+  room.phase = 'waiting';
+  room.votes = {};
+  room.voteRevealed = false;
+  room.skillUsages = [];
+  room.round = 1;
+  broadcast();
+  toast('新一轮准备开始（所有技能已重置）');
+}
+
+function onPlayerCardClick(pid){
+  if(!isHost || !room) return;
+  if(room.phase === 'waiting') return;
+  const p = room.players[pid];
+  if(!p) return;
+  const wasAlive = p.alive;
+  p.alive = !p.alive;
+
+  // 【关键】猎人：被标记出局后才可以开枪
+  if(p.role === 'hunter'){
+    if(wasAlive && !p.alive){
+      // 刚刚被淘汰，启用开枪
+      p.hunterCanShoot = true;
+    } else if(!wasAlive && p.alive){
+      // 复活，禁用开枪
+      p.hunterCanShoot = false;
+    }
+  }
+
+  broadcast();
+  toast(p.name + (p.alive ? ' 已复活' : ' 已出局'));
+}
+
+/* ============ 玩家操作 ============ */
+function playerDrawRole(){
+  if(!room || room.phase !== 'selecting') return;
+  if(isHost) return;
+  const me = room.players[myId];
+  if(!me || me.role) return;
+  if(!hostConn || !hostConn.open){ toast('连接已断开'); return; }
+  try{ hostConn.send({ type:'drawRole' }); }catch(e){ toast('发送失败'); }
+}
+
+function playerVote(targetId){
+  if(!room || room.phase !== 'voting'){ toast('当前不能投票'); return; }
+  if(!hostConn || !hostConn.open){ toast('连接已断开'); return; }
+  try{ hostConn.send({ type:'vote', targetId }); }catch(e){ toast('发送失败'); }
+}
+
+function playerUseSkill(targets, skillType){
+  if(!room) return;
+  const me = room.players[myId];
+  if(!me || !me.role) return;
+  const rd = ROLE_DEFS[me.role];
+  if(!rd || !rd.skill) return;
+
+  // 本地预检
+  if(me.role === 'witch'){
+    if(skillType === 'antidote' && me.witchAntidoteUsed){ toast('解药已使用过'); return; }
+    if(skillType === 'poison' && me.witchPoisonUsed){ toast('毒药已使用过'); return; }
+    if(room.phase !== 'night'){ toast('现在不是黑夜，无法使用技能'); return; }
+    if(!me.alive){ toast('你已被淘汰'); return; }
+  } else if(me.role === 'hunter'){
+    if(!me.hunterCanShoot){ toast('只有在被淘汰后才能开枪'); return; }
+    if(me.alive){ toast('只有被淘汰后才能开枪'); return; }
+    if(me.skillUsedThisRound){ toast('技能已使用过'); return; }
+  } else {
+    if(room.phase !== 'night'){ toast('现在不是黑夜，无法使用技能'); return; }
+    if(!me.alive){ toast('你已被淘汰'); return; }
+    if(me.skillUsedThisRound){ toast('本轮技能已使用'); return; }
+  }
+
+  if(!hostConn || !hostConn.open){ toast('连接已断开'); return; }
+  try{ hostConn.send({ type:'useSkill', targets, skillType: skillType || 'default' }); }
+  catch(e){ toast('发送失败'); }
+}
+
+/* ============ 模态框 ============ */
+function showModal(innerHtml){
+  const modal = document.createElement('div');
+  modal.className = 'modal-mask';
+  modal.innerHTML = '<div class="modal-panel">' + innerHtml + '</div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
+  return modal;
+}
+
+function showRoleDetail(rk){
+  const rd = ROLE_DEFS[rk];
+  if(!rd) return;
+  const skillHtml = rd.skill ? `
+    <div class="rd-section rd-skill">
+      <h4>技能 · ${rd.skill.icon} ${rd.skill.name}</h4>
+      <p>${rd.skill.desc}</p>
+    </div>` : `
+    <div class="rd-section"><h4>技能</h4><p style="color:#666">该身份没有主动技能</p></div>`;
+  const modal = showModal(`
+    <div class="role-detail">
+      <div class="rd-icon">${rd.icon}</div>
+      <div class="rd-name">${rd.name}</div>
+      <div class="rd-team ${rd.group}">${TEAM_LABEL[rd.group]}</div>
+      <div class="rd-section"><h4>身份介绍</h4><p>${rd.desc}</p></div>
+      ${skillHtml}
+    </div>
+    <button class="btn btn-outline" id="modalClose" style="width:100%">关闭</button>
+  `);
+  modal.querySelector('#modalClose').onclick = () => modal.remove();
+}
+
+function showRolePicker(){
+  if(rolePickerOpen) return;
+  if(document.getElementById('rolePickerModal')) return;
+  rolePickerOpen = true;
+
+  const modal = document.createElement('div');
+  modal.id = 'rolePickerModal';
+  modal.className = 'modal-mask';
+  modal.innerHTML = `
+    <div class="modal-panel">
+      <h3>🎴 抽取你的身份牌</h3>
+      <div style="text-align:center;color:#888;font-size:12px;margin-bottom:16px;line-height:1.7">
+        从下方选择任意一张卡牌，<br>系统会随机分配一个身份给你
+      </div>
+      <div class="card-grid" id="cardGrid">
+        ${[0,1,2,3,4,5,6,7,8].map(i => `
+          <div class="draw-card" data-idx="${i}">
+            <div class="draw-card-inner">
+              <div class="draw-card-front">🎴</div>
+              <div class="draw-card-back" data-back="${i}"></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="text-align:center;color:#666;font-size:11px;margin-top:14px">点击卡牌后身份将立即分配</div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const cards = modal.querySelectorAll('.draw-card');
+  cards.forEach(el => {
+    el.addEventListener('click', () => {
+      if(drawingRole) return;
+      drawingRole = true;
+      el.classList.add('flipped');
+      cards.forEach(c => { if(c !== el) c.classList.add('disabled'); });
+      playerDrawRole();
+      setTimeout(() => {
+        const me = room && room.players[myId];
+        if(!me || !me.role){
+          drawingRole = false;
+          el.classList.remove('flipped');
+          cards.forEach(c => c.classList.remove('disabled'));
+          toast('抽取超时，请重试');
+        }
+      }, 5000);
+    });
+  });
+}
+
+function updateRolePickerReveal(){
+  const modal = document.getElementById('rolePickerModal');
+  if(!modal || !room) return;
+  const me = room.players[myId];
+  if(!me || !me.role) return;
+  const flipped = modal.querySelector('.draw-card.flipped');
+  if(!flipped) return;
+  const rd = ROLE_DEFS[me.role] || ROLE_DEFS.villager;
+  const back = flipped.querySelector('.draw-card-back');
+  if(back && !back.innerHTML.trim()){
+    back.innerHTML = `<div class="back-icon">${rd.icon}</div><div class="back-name">${rd.name}</div>`;
+  }
+  if(!modal.dataset.closing){
+    modal.dataset.closing = '1';
+    setTimeout(() => {
+      modal.style.transition = 'opacity .4s';
+      modal.style.opacity = '0';
+      setTimeout(() => {
+        try{ modal.remove(); }catch(e){}
+        rolePickerOpen = false;
+        drawingRole = false;
+      }, 400);
+    }, 1400);
+  }
+}
+
+function showSeerResult(data){
+  const modal = showModal(`
+    <div style="text-align:center;padding:8px 0 16px">
+      <div style="font-size:52px;line-height:1">🔮</div>
+      <div style="font-size:20px;color:#bb8fce;margin-top:10px;letter-spacing:4px;font-weight:700">查验结果</div>
+    </div>
+    <div class="seer-result-box">
+      <div class="srb-label">你查验的玩家</div>
+      <div class="srb-target">${esc(data.targetName)}</div>
+      <div class="srb-label" style="margin-top:12px">身份是</div>
+      <div class="srb-result ${data.roleGroup === 'wolf' ? 'wolf' : 'good'}">
+        ${data.roleIcon || ''} ${esc(data.roleName)}
+      </div>
+    </div>
+    <button class="btn btn-outline" id="modalClose" style="width:100%;margin-top:14px">知道了</button>
+  `);
+  modal.querySelector('#modalClose').onclick = () => modal.remove();
+}
+
+/* 通用目标选择（用于狼人/预言家/守卫/丘比特/猎人） */
+function openSkillTargetModal(skillType, allowSelf){
+  const me = room && room.players[myId];
+  if(!me || !me.role) return;
+  const rd = ROLE_DEFS[me.role];
+  if(!rd || !rd.skill) return;
+
+  // 阶段和状态检查
+  if(me.role === 'hunter'){
+    if(!me.hunterCanShoot){ toast('只有在被淘汰后才能开枪'); return; }
+    if(me.alive){ toast('只有被淘汰后才能开枪'); return; }
+    if(me.skillUsedThisRound){ toast('技能已使用过'); return; }
+  } else {
+    if(room.phase !== 'night'){ toast('现在不是黑夜，无法使用技能'); return; }
+    if(!me.alive){ toast('你已被淘汰'); return; }
+    if(me.skillUsedThisRound){ toast('本轮技能已使用'); return; }
+  }
+
+  const needCount = rd.skill.targets || 1;
+  const selfAllowed = allowSelf !== undefined ? allowSelf : !!rd.skill.allowSelf;
+  let candidates = Object.values(room.players).filter(p => {
+    if(!p.alive) return false;
+    if(p.id === myId && !selfAllowed) return false;
+    // 守卫：不能连续两轮守护同一人
+    if(me.role === 'guard' && p.id === me.lastGuardedId && me.lastGuardedRound === room.round - 1) return false;
+    return true;
+  });
+
+  // 猎人：可以选所有存活玩家，包括自己？——标准规则是不包括自己
+  if(me.role === 'hunter'){
+    candidates = Object.values(room.players).filter(p => p.alive && p.id !== myId);
+  }
+
+  if(candidates.length < needCount){ toast('可选择的玩家不足'); return; }
+
+  const selected = [];
+  const title = skillType === 'antidote' ? '🧪 使用解药' : skillType === 'poison' ? '☠️ 使用毒药' : (rd.skill.icon + ' ' + rd.skill.name);
+  const subDesc = skillType === 'antidote' ? '选择一名玩家使用解药（含自己）' :
+                  skillType === 'poison' ? '选择一名玩家使用毒药（含自己）' :
+                  rd.skill.desc;
+
+  const modal = showModal(`
+    <h3>${title}</h3>
+    <div style="text-align:center;color:#888;font-size:12px;margin-bottom:14px;line-height:1.6">
+      ${subDesc}<br>
+      <span style="color:#bb8fce">请选择 ${needCount} 名玩家（已选 <b id="selCount">0</b>/${needCount}）</span>
+    </div>
+    <div class="modal-list" id="targetList">
+      ${candidates.map(p => `
+        <div class="modal-item" data-tid="${esc(p.id)}">
+          <span class="mi-avatar">${p.id === myId ? '🌟' : '👤'}</span>
+          <span class="mi-name">${esc(p.name)}${p.id === myId ? ' (自己)' : ''}</span>
+          ${(me.role === 'guard' && p.id === me.lastGuardedId && me.lastGuardedRound === room.round - 1) ? '<span class="mi-tag">上轮已守</span>' : ''}
+          <span class="mi-check" data-check></span>
+        </div>
+      `).join('')}
+    </div>
+    <button class="btn btn-skill" id="btnConfirmSkill" disabled>确认使用</button>
+    <button class="btn btn-outline" id="modalCancel" style="margin-top:8px">取消</button>
+  `);
+
+  const list = modal.querySelector('#targetList');
+  const confirmBtn = modal.querySelector('#btnConfirmSkill');
+  const selCountEl = modal.querySelector('#selCount');
+
+  list.addEventListener('click', (e) => {
+    const item = e.target.closest('.modal-item');
+    if(!item) return;
+    const tid = item.getAttribute('data-tid');
+    const idx = selected.indexOf(tid);
+    if(idx >= 0){
+      selected.splice(idx, 1);
+      item.classList.remove('selected');
+      item.querySelector('[data-check]').textContent = '';
+    } else {
+      if(selected.length >= needCount){ toast('最多选择 ' + needCount + ' 人'); return; }
+      selected.push(tid);
+      item.classList.add('selected');
+      item.querySelector('[data-check]').textContent = '✓';
+    }
+    selCountEl.textContent = selected.length;
+    confirmBtn.disabled = selected.length !== needCount;
+  });
+
+  confirmBtn.onclick = () => {
+    if(selected.length !== needCount) return;
+    modal.remove();
+    playerUseSkill(selected, skillType);
+  };
+  modal.querySelector('#modalCancel').onclick = () => modal.remove();
+}
+
+/* 女巫专用：选择解药或毒药 */
+function openWitchSkillModal(){
+  const me = room && room.players[myId];
+  if(!me || me.role !== 'witch') return;
+  if(room.phase !== 'night'){ toast('现在不是黑夜，无法使用技能'); return; }
+  if(!me.alive){ toast('你已被淘汰'); return; }
+  if(me.witchAntidoteUsed && me.witchPoisonUsed){ toast('所有药水已用完'); return; }
+
+  // 直接展示两个按钮选择
+  if(!me.witchAntidoteUsed && !me.witchPoisonUsed){
+    // 都可用，让用户选择
+    const modal = showModal(`
+      <h3>🧪 女巫用药</h3>
+      <div style="text-align:center;color:#888;font-size:12px;margin-bottom:16px;line-height:1.6">
+        请选择使用哪种药水<br>每种药水仅可使用一次
+      </div>
+      <button class="btn btn-skill antidote" id="btnAntidote" style="background:linear-gradient(135deg,#2ecc71,#27ae60);margin-bottom:12px">🧪 解药（救人）</button>
+      <button class="btn btn-skill poison" id="btnPoison" style="background:linear-gradient(135deg,#8e44ad,#6c3483);margin-bottom:12px">☠️ 毒药（毒人）</button>
+      <button class="btn btn-outline" id="modalCancel">取消</button>
+    `);
+    modal.querySelector('#btnAntidote').onclick = () => {
+      modal.remove();
+      openSkillTargetModal('antidote', true);
+    };
+    modal.querySelector('#btnPoison').onclick = () => {
+      modal.remove();
+      openSkillTargetModal('poison', true);
+    };
+    modal.querySelector('#modalCancel').onclick = () => modal.remove();
+    return;
+  }
+
+  // 只剩一种可用，直接打开
+  if(!me.witchAntidoteUsed){
+    openSkillTargetModal('antidote', true);
+  } else {
+    openSkillTargetModal('poison', true);
+  }
+}
+
+function openVoteModal(){
+  if(!room || room.phase !== 'voting'){ toast('当前不能投票'); return; }
+  const me = room.players[myId];
+  if(!me || !me.alive){ toast('你已出局，无法投票'); return; }
+  if(room.votes[myId]){ toast('你已投过票'); return; }
+
+  const candidates = Object.values(room.players).filter(p => p.alive && p.id !== myId);
+  if(candidates.length === 0){ toast('没有可投票的对象'); return; }
+
+  const modal = showModal(`
+    <h3>选择要淘汰的玩家</h3>
+    <div class="modal-list">
+      ${candidates.map(p => `
+        <div class="modal-item" data-tid="${esc(p.id)}">
+          <span class="mi-avatar">👤</span>
+          <span class="mi-name">${esc(p.name)}</span>
+        </div>
+      `).join('')}
+    </div>
+    <button class="btn btn-outline" id="modalCancel">取消</button>
+  `);
+
+  modal.addEventListener('click', (e) => {
+    const item = e.target.closest('.modal-item');
+    if(item){ modal.remove(); playerVote(item.getAttribute('data-tid')); }
+  });
+  modal.querySelector('#modalCancel').onclick = () => modal.remove();
+}
+
+/* ============ 离开房间 ============ */
+function leaveRoom(){
+  if(isHost){
+    if(!confirm('作为主持人退出后房间会关闭，但你可以通过"返回上次创建的房间"恢复。确定退出？')) return;
+    const payload = { type:'error', msg:'主持人已关闭房间' };
+    Object.keys(conns).forEach(pid => {
+      const c = conns[pid];
+      if(c && c.open){ try{ c.send(payload); }catch(e){} }
+    });
+    saveHostRoom();
+    setTimeout(() => {
+      cleanup(); screen = 'home';
+      try{ history.replaceState({}, '', location.pathname); }catch(e){}
+      render();
+    }, 100);
+  } else {
+    if(hostConn && hostConn.open){ try{ hostConn.send({ type:'leave' }); }catch(e){} }
+    cleanup(); screen = 'home';
+    try{ history.replaceState({}, '', location.pathname); }catch(e){}
+    render();
+  }
+}
+
+/* ============ 房间渲染 ============ */
+function renderRoom(app){
+  // 【关键修复】收到 state 之前显示加载界面，不弹回首页
+  if(!room){
+    app.innerHTML = `
+      <div class="loading">
+        <div class="ld-icon">🔄</div>
+        <div class="ld-text">正在同步房间状态...</div>
+        <div class="ld-sub">请稍候，不要关闭页面</div>
+      </div>
+    `;
+    return;
+  }
+  const r = room;
+  const players = Object.values(r.players || {}).sort((a,b) => (a.joinedAt||0) - (b.joinedAt||0));
+  const me = r.players[myId];
+  const playerCount = players.length;
+  const myRoleDef = me && me.role ? ROLE_DEFS[me.role] : null;
+
+  let html = '';
+
+  const phaseText = {
+    waiting:'等待中', selecting:'抽身份', night:'🌙 黑夜', day:'☀️ 白天',
+    voting:'🗳 投票中', ended:'已结束'
+  };
+  const phaseClass = {
+    waiting:'phase-waiting', selecting:'phase-selecting', night:'phase-night',
+    day:'phase-day', voting:'phase-voting', ended:'phase-ended'
+  };
+  html += `
+    <div class="top-bar">
+      <div class="spacer"></div>
+      <div class="phase-tag ${phaseClass[r.phase] || 'phase-waiting'}">
+        ${phaseText[r.phase] || '等待中'}
+        ${r.phase !== 'waiting' && r.phase !== 'selecting' ? ' · 第' + (r.round||1) + '轮' : ''}
+      </div>
+    </div>
+  `;
+
+  /* ============ 等待阶段 ============ */
+  if(r.phase === 'waiting'){
+    // 分享区域（主持人可见）
+    if(isHost){
+      html += `
+        <div class="share-card">
+          <h2>邀请好友加入</h2>
+          <div class="room-code-row">
+            <div class="room-code" id="roomCodeDisplay" title="点击复制">${esc(r.code)}</div>
+            <div class="copy-icon" id="btnCopyCode" title="复制房间码">📋</div>
+          </div>
+          <div id="qrcode"></div>
+          <div class="share-buttons">
+            <button class="btn btn-outline btn-sm" id="btnCopyLink">🔗 复制链接</button>
+            <button class="btn btn-gold btn-sm" id="btnShare">📤 分享</button>
+          </div>
+          <div class="share-hint">扫码或分享链接邀请好友<br>好友输入房间码即可加入</div>
+        </div>
+      `;
+    } else {
+      html += `
+        <div class="card" style="text-align:center">
+          <h2>等待主持人开始</h2>
+          <div style="color:#888;font-size:13px;padding:16px 0;line-height:1.7">
+            你已加入房间<br>
+            <span style="color:#c9a84c">等待主持人开始游戏...</span>
+          </div>
+        </div>
+      `;
+    }
+
+    if(isHost){
+      const currentWolves = getEffectiveWolfCount();
+      html += `
+        <div class="console">
+          <h3>⚙ 主持人设置</h3>
+          <div class="console-hint">设置人数上限和可选身份牌</div>
+          <div class="field-label">参与人数上限</div>
+          <select class="input" id="maxPlayers" style="margin-bottom:14px">
+            ${[4,5,6,7,8,9,10,11,12].map(n => `<option value="${n}" ${r.maxPlayers===n?'selected':''}>${n} 人</option>`).join('')}
+          </select>
+          <div class="field-label">狼人数量（当前：${r.wolfCount > 0 ? r.wolfCount + ' 只' : '自动 → ' + currentWolves + ' 只'}）</div>
+          <select class="input" id="wolfCount" style="margin-bottom:14px">
+            <option value="0" ${r.wolfCount === 0 ? 'selected' : ''}>自动（根据人数：${calcWolfCount(playerCount || 8)} 只）</option>
+            ${[1,2,3,4,5,6].map(n => `<option value="${n}" ${r.wolfCount === n ? 'selected' : ''}>${n} 只狼人</option>`).join('')}
+          </select>
+          <div class="field-label">可选身份牌（点击启用/禁用，右键查看详情）</div>
+          <div class="role-console" id="roleSelectGrid">
+            ${Object.keys(ROLE_DEFS).filter(k => k !== 'villager').map(rk => {
+              const rd = ROLE_DEFS[rk];
+              const on = r.selectedRoles.indexOf(rk) >= 0;
+              return `
+                <div class="role-console-card ${on ? '' : 'disabled-card'}" data-toggle="${rk}">
+                  <div class="rc-status ${on ? 'on' : 'off'}">${on ? '启用' : '禁用'}</div>
+                  <div class="rc-icon">${rd.icon}</div>
+                  <div class="rc-name">${rd.name}</div>
+                  ${rk === 'wolf' ? `<div class="rc-skill" style="color:#e74c3c">×${currentWolves}</div>` : `<div class="rc-skill">${rd.skill ? rd.skill.name : '无技能'}</div>`}
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <div style="font-size:11px;color:#666;text-align:center;margin-top:10px">💡 长按/右键身份卡可查看详情</div>
+        </div>
+        <button class="btn btn-gold" id="btnStartGame" ${playerCount < 2 ? 'disabled' : ''}>
+          🎮 开始游戏（${playerCount}/${r.maxPlayers} 人）
+        </button>
+      `;
+    }
+
+    html += `<div class="card"><h2>玩家列表（${players.length} 人）</h2>`;
+    if(players.length === 0){
+      html += `<div style="text-align:center;color:#666;padding:20px;font-size:13px">还没有玩家加入，请分享房间码</div>`;
+    } else {
+      players.forEach(p => {
+        html += `
+          <div class="waiting-player">
+            <div class="wp-avatar">👤</div>
+            <div class="wp-name">${esc(p.name)}${p.id===myId?' <span style="color:#c9a84c;font-size:11px">(你)</span>':''}</div>
+            <div class="wp-status">已加入</div>
+          </div>
+        `;
+      });
+    }
+    html += `</div>`;
+    html += `<button class="btn btn-outline" id="btnLeave">退出房间</button>`;
+  }
+
+  /* ============ 抽身份阶段 ============ */
+  else if(r.phase === 'selecting'){
+    if(myRoleDef){
+      html += `
+        <div class="my-role-display" id="myRoleDisplay">
+          <div class="big-icon">${myRoleDef.icon}</div>
+          <div class="big-name">${myRoleDef.name}</div>
+          <div class="big-desc">${myRoleDef.desc}</div>
+          <div class="info-hint">👆 点击卡片查看详细身份介绍</div>
+        </div>
+        <div class="secret-hint">🔒 此身份仅你和主持人可见，请勿泄露</div>
+      `;
+    } else {
+      html += `<div class="card" style="text-align:center"><h2>等待抽取身份</h2><div style="color:#888;font-size:13px;padding:16px 0">正在弹出卡牌选择界面...</div></div>`;
+    }
+
+    if(isHost){
+      html += renderRoleShowcase();
+      html += `<button class="btn btn-gold" id="btnStartNight" style="margin-bottom:14px">🌙 天黑请闭眼（开始游戏）</button>`;
+    }
+
+    html += renderPlayerGrid(players, false);
+    html += `<button class="btn btn-outline" id="btnLeave">退出房间</button>`;
+  }
+
+  /* ============ 黑夜阶段 ============ */
+  else if(r.phase === 'night'){
+    if(myRoleDef){
+      html += `
+        <div class="my-role-display" id="myRoleDisplay">
+          <div class="big-icon">${myRoleDef.icon}</div>
+          <div class="big-name">${myRoleDef.name}</div>
+          <div class="big-desc">${myRoleDef.desc}</div>
+          <div class="info-hint">👆 点击卡片查看详细身份介绍</div>
+        </div>
+      `;
+    }
+
+    // 技能面板
+    if(myRoleDef && myRoleDef.skill && me.alive){
+      html += renderSkillPanel(me, myRoleDef, r, 'night');
+    }
+
+    if(me && !me.alive){
+      html += `
+        <div class="result-panel" style="padding:16px;border-color:#c0392b">
+          <div style="font-size:14px;color:#e74c3c;letter-spacing:2px">☠️ 你已出局</div>
+          <div style="font-size:12px;color:#888;margin-top:6px">你可以旁观或退出房间</div>
+        </div>
+      `;
+    }
+
+    if(isHost){
+      html += renderHostPhaseControls(r.phase);
+      html += renderSkillLog();
+    }
+
+    html += renderPlayerGrid(players, true);
+    html += `<button class="btn btn-outline" id="btnLeave">退出房间</button>`;
+  }
+
+  /* ============ 白天阶段 ============ */
+  else if(r.phase === 'day'){
+    if(myRoleDef){
+      html += `
+        <div class="my-role-display" id="myRoleDisplay">
+          <div class="big-icon">${myRoleDef.icon}</div>
+          <div class="big-name">${myRoleDef.name}</div>
+          <div class="big-desc">${myRoleDef.desc}</div>
+          <div class="info-hint">👆 点击卡片查看详细身份介绍</div>
+        </div>
+      `;
+    }
+
+    if(myRoleDef && myRoleDef.skill && me.alive){
+      html += renderSkillPanel(me, myRoleDef, r, 'day');
+    }
+
+    // 【猎人特殊】被淘汰后显示开枪按钮（不限制阶段）
+    if(myRoleDef && myRoleDef.role === 'hunter'){ /* 不会走到这 */ }
+    if(me && me.role === 'hunter' && !me.alive && me.hunterCanShoot && !me.skillUsedThisRound){
+      html += `
+        <div class="skill-panel" style="background:linear-gradient(180deg,#2a1508 0%,#1a0d05 100%);border-color:rgba(230,126,34,.5)">
+          <h3 style="color:#e67e22">🏹 猎人开枪</h3>
+          <div class="skill-desc">你已被淘汰，可以开枪带走一名玩家</div>
+          <button class="btn-skill hunter" id="btnHunterShoot">💥 选择开枪目标</button>
+        </div>
+      `;
+    }
+
+    if(me && !me.alive && me.role !== 'hunter'){
+      html += `
+        <div class="result-panel" style="padding:16px;border-color:#c0392b">
+          <div style="font-size:14px;color:#e74c3c;letter-spacing:2px">☠️ 你已出局</div>
+          <div style="font-size:12px;color:#888;margin-top:6px">你可以旁观或退出房间</div>
+        </div>
+      `;
+    }
+
+    if(isHost){
+      html += renderHostPhaseControls(r.phase);
+      html += renderSkillLog();
+    }
+
+    html += renderPlayerGrid(players, true);
+    html += `<button class="btn btn-outline" id="btnLeave">退出房间</button>`;
+  }
+
+  /* ============ 投票阶段 ============ */
+  else if(r.phase === 'voting'){
+    const myVote = me ? r.votes[myId] : null;
+    const voteCount = Object.keys(r.votes || {}).length;
+    const aliveVoteCount = players.filter(p => p.alive).length;
+
+    if(myRoleDef){
+      html += `
+        <div class="my-role-display" id="myRoleDisplay">
+          <div class="big-icon">${myRoleDef.icon}</div>
+          <div class="big-name">${myRoleDef.name}</div>
+          <div class="big-desc">${myRoleDef.desc}</div>
+          <div class="info-hint">👆 点击卡片查看详细身份介绍</div>
+        </div>
+      `;
+    }
+
+    // 猎人特殊：被淘汰后可开枪
+    if(me && me.role === 'hunter' && !me.alive && me.hunterCanShoot && !me.skillUsedThisRound){
+      html += `
+        <div class="skill-panel" style="background:linear-gradient(180deg,#2a1508 0%,#1a0d05 100%);border-color:rgba(230,126,34,.5)">
+          <h3 style="color:#e67e22">🏹 猎人开枪</h3>
+          <div class="skill-desc">你已被淘汰，可以开枪带走一名玩家</div>
+          <button class="btn-skill hunter" id="btnHunterShoot">💥 选择开枪目标</button>
+        </div>
+      `;
+    }
+
+    // 女巫/其他技能 - 投票阶段锁定
+    if(myRoleDef && myRoleDef.skill && me.alive && me.role !== 'hunter'){
+      html += renderSkillPanel(me, myRoleDef, r, 'voting');
+    }
+
+    if(me && !me.alive && me.role !== 'hunter'){
+      html += `
+        <div class="result-panel" style="padding:16px;border-color:#c0392b">
+          <div style="font-size:14px;color:#e74c3c;letter-spacing:2px">☠️ 你已出局</div>
+          <div style="font-size:12px;color:#888;margin-top:6px">你可以旁观或退出房间</div>
+        </div>
+      `;
+    }
+
+    if(isHost){
+      html += renderHostPhaseControls(r.phase);
+      html += renderSkillLog();
+    }
+
+    if(me && me.alive){
+      if(!myVote){
+        html += `<button class="btn btn-danger" id="btnVote" style="padding:20px;font-size:18px">🗳 点击投票</button>`;
+      } else {
+        const t = r.players[myVote];
+        html += `
+          <div class="vote-panel">
+            <h3>✅ 你已投票</h3>
+            <div style="font-size:14px;color:#ccc">投票对象：${t ? esc(t.name) : '未知'}</div>
+          </div>
+        `;
+      }
+    }
+
+    html += `<div class="vote-progress"><span class="status-dot"></span>已投票：${voteCount}/${aliveVoteCount} 人</div>`;
+
+    if(r.voteRevealed){
+      const counts = {};
+      Object.keys(r.votes || {}).forEach(voterId => {
+        const tid = r.votes[voterId];
+        counts[tid] = (counts[tid] || 0) + 1;
+      });
+      const sorted = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
+      html += `<div class="card"><h2>📊 投票结果</h2>`;
+      if(sorted.length === 0){
+        html += `<div style="color:#666;text-align:center;padding:10px">暂无投票</div>`;
+      } else {
+        sorted.forEach(tid => {
+          const tp = r.players[tid];
+          if(tp){
+            html += `<div class="vote-result-row"><span>${esc(tp.name)}</span><span class="vr-count">${counts[tid]} 票</span></div>`;
+          }
+        });
+      }
+      html += `</div>`;
+    }
+
+    html += renderPlayerGrid(players, true);
+    html += `<button class="btn btn-outline" id="btnLeave">退出房间</button>`;
+  }
+
+  /* ============ 结束阶段 ============ */
+  else if(r.phase === 'ended'){
+    html += `
+      <div class="result-panel">
+        <div class="result-title">本 轮 结 束</div>
+        <div class="result-detail">
+          <p>第 ${r.round || 1} 轮游戏已结束</p>
+          <p style="margin-top:8px">主持人可点击"🌙 天黑请闭眼"开始下一轮，或"🔄 重新开始"重置游戏</p>
+        </div>
+      </div>
+    `;
+
+    if(isHost){
+      html += renderHostPhaseControls(r.phase);
+      html += renderSkillLog();
+    }
+
+    html += `<div class="card"><h2>身份公布</h2><div class="player-grid">`;
+    players.forEach(p => {
+      const rd = ROLE_DEFS[p.role] || ROLE_DEFS.villager;
+      const cls = 'player-card' + (p.alive ? '' : ' dead');
+      html += `
+        <div class="${cls}">
+          <div class="p-avatar">${rd.icon}</div>
+          <div class="p-name">${esc(p.name)}</div>
+          <div class="p-role ${rd.group}">${rd.name}</div>
+          ${!p.alive ? '<div class="dead-badge">☠️ 出局</div>' : ''}
+        </div>
+      `;
+    });
+    html += `</div></div>`;
+    html += `<button class="btn btn-outline" id="btnLeave">退出房间</button>`;
+  }
+
+  html += '<div class="safe-bottom"></div>';
+  app.innerHTML = html;
+  bindRoomEvents();
+
+  updateRolePickerReveal();
+
+  if(r.phase === 'selecting' && me && !me.role && !isHost && !rolePickerOpen){
+    setTimeout(() => showRolePicker(), 150);
+  }
+}
+
+/* 技能面板渲染 */
+function renderSkillPanel(me, myRoleDef, r, phase){
+  const isNight = phase === 'night';
+
+  // ============ 女巫 ============
+  if(me.role === 'witch'){
+    if(me.witchAntidoteUsed && me.witchPoisonUsed){
+      return `
+        <div class="skill-panel ${isNight ? 'night' : 'day'}">
+          <h3>🧪 女巫 · 药水已用完</h3>
+          <div class="skill-desc">${isNight ? '两瓶药水都已使用过' : '☀️ 白天不能使用技能'}</div>
+          <button class="btn-skill used" disabled>✓ 药水已用完</button>
+        </div>
+      `;
+    }
+    const antidoteUsed = me.witchAntidoteUsed;
+    const poisonUsed = me.witchPoisonUsed;
+
+    return `
+      <div class="skill-panel ${isNight ? 'night' : 'day'}">
+        <h3>🧪 女巫 · 用药（第 ${r.round} 轮）</h3>
+        <div class="skill-desc">${isNight ? '选择使用解药或毒药（每种仅一次）' : '☀️ 白天不能使用技能，等待天黑'}</div>
+        <button class="btn-skill antidote ${!isNight || antidoteUsed ? 'used' : ''}" id="btnUseAntidote"
+                ${!isNight || antidoteUsed ? 'disabled' : ''}>
+          🧪 解药 ${antidoteUsed ? '（已使用）' : '（救人）'}
+        </button>
+        <button class="btn-skill poison ${!isNight || poisonUsed ? 'used' : ''}" id="btnUsePoison"
+                ${!isNight || poisonUsed ? 'disabled' : ''}>
+          ☠️ 毒药 ${poisonUsed ? '（已使用）' : '（毒人）'}
+        </button>
+      </div>
+    `;
+  }
+
+  // ============ 猎人 ============
+  if(me.role === 'hunter'){
+    // 猎人技能不由阶段控制，而是由主持人点击出局触发
+    // 在别处渲染
+    return '';
+  }
+
+  // ============ 通用（狼人/预言家/守卫/丘比特）============
+  if(!myRoleDef.skill) return '';
+
+  const used = me.skillUsedThisRound;
+  const skillClass = myRoleDef.skill.style || (isNight ? 'night' : '');
+  const usage = (r.skillUsages || []).filter(u => u.playerId === myId && u.round === r.round).pop();
+
+  // 守卫特殊提示
+  let extraDesc = '';
+  if(me.role === 'guard' && me.lastGuardedId && me.lastGuardedRound === r.round - 1){
+    const lastTarget = r.players[me.lastGuardedId];
+    if(lastTarget) extraDesc = `<div style="color:#f39c12;font-size:11px;margin-top:6px">⚠️ 上一轮已守护「${esc(lastTarget.name)}」，本轮不能再守护同一人</div>`;
+  }
+
+  return `
+    <div class="skill-panel ${isNight ? 'night' : 'day'}">
+      <h3>${myRoleDef.skill.icon} 技能 · ${myRoleDef.skill.name}（第 ${r.round} 轮）</h3>
+      <div class="skill-desc">
+        ${isNight ? myRoleDef.skill.desc : '☀️ 白天不能使用技能，等待天黑'}
+        ${extraDesc}
+      </div>
+      <button class="btn-skill ${!isNight || used ? 'used' : skillClass}" id="btnUseSkill"
+              ${!isNight || used ? 'disabled' : ''}>
+        ${!isNight ? '☀️ 白天无法使用' : (used ? '✓ 本轮技能已使用' : myRoleDef.skill.icon + ' 使用技能')}
+      </button>
+      ${usage ? `
+        <div class="skill-usage-info">
+          <b>第 ${r.round} 轮使用记录：</b>${fmtTime(usage.timestamp)} 对 <b>${esc(usage.targetNames.join('、'))}</b> 使用了「${esc(usage.skillName)}」
+          ${usage.revealResult ? `<br><b style="color:#ff6b6b">查验结果：</b>${usage.revealResult.map(t => esc(t.name) + ' → ' + esc(t.roleName)).join('，')}` : ''}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function renderRoleShowcase(){
+  return `
+    <div class="console">
+      <h3>🎛 身份牌一览</h3>
+      <div class="console-hint">点击任意身份牌查看详细介绍 · 技能在"天黑请闭眼"时自动开启</div>
+      <div class="role-console">
+        ${Object.keys(ROLE_DEFS).filter(k => k !== 'villager').map(rk => {
+          const rd = ROLE_DEFS[rk];
+          return `
+            <div class="role-console-card" data-info="${rk}">
+              <div class="rc-icon">${rd.icon}</div>
+              <div class="rc-name">${rd.name}</div>
+              <div class="rc-skill">${rd.skill ? rd.skill.icon + ' ' + rd.skill.name : '无技能'}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div class="role-console" style="grid-template-columns:repeat(3,1fr);margin-top:10px">
+        <div class="role-console-card" data-info="villager">
+          <div class="rc-icon">👤</div>
+          <div class="rc-name">平民</div>
+          <div class="rc-skill">无技能</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderHostPhaseControls(currentPhase){
+  const r = room;
+  const isNight = currentPhase === 'night';
+  const isDay = currentPhase === 'day';
+  const isVoting = currentPhase === 'voting';
+  const isEnded = currentPhase === 'ended';
+  return `
+    <div class="console">
+      <h3>🌗 阶段控制</h3>
+      <div class="console-hint">
+        🌙 天黑 → 技能自动全开 &nbsp;·&nbsp; ☀️ 天亮 → 技能自动全关
+      </div>
+      <div class="phase-controls">
+        <button class="btn btn-night ${isNight ? 'active' : ''}" id="btnStartNight">
+          🌙 天黑请闭眼
+        </button>
+        <button class="btn btn-day ${isDay ? 'active' : ''}" id="btnStartDay">
+          ☀️ 天亮请睁眼
+        </button>
+        <button class="btn btn-danger ${isVoting ? 'active' : ''}" id="btnStartVoting">
+          🗳 开始投票
+        </button>
+        <button class="btn btn-outline" id="btnEndRound">
+          🏁 结束本轮
+        </button>
+      </div>
+      ${isVoting ? `
+        <button class="btn btn-gold btn-sm" id="btnRevealVotes" style="width:100%;margin-top:10px">
+          📊 ${r.voteRevealed ? '已公布结果' : '公布投票结果'}
+        </button>
+      ` : ''}
+      ${isEnded ? `
+        <button class="btn btn-gold btn-sm" id="btnRestart" style="width:100%;margin-top:10px">
+          🔄 重新开始新游戏
+        </button>
+      ` : ''}
+      <div style="text-align:center;color:#666;font-size:11px;margin-top:12px;line-height:1.6">
+        💡 点击"天黑请闭眼"进入新一轮并自动开启所有技能
+      </div>
+    </div>
+  `;
+}
+
+function renderSkillLog(){
+  const r = room;
+  const usages = (r.skillUsages || []).slice().sort((a,b) => b.timestamp - a.timestamp);
+  return `
+    <div class="console">
+      <h3>📜 技能使用日志</h3>
+      <div class="console-hint">所有玩家技能使用详情（含预言家查验结果）</div>
+      <div class="skill-log">
+        ${usages.length === 0 ? `<div class="skill-log-empty">暂无技能使用记录</div>` : usages.map(u => {
+          const rd = ROLE_DEFS[u.role];
+          return `
+            <div class="skill-log-item">
+              <div class="sl-head">
+                <span style="color:#fff">${esc(u.playerName)}</span>
+                <span class="sl-role">${rd ? rd.icon : ''} ${esc(u.roleName)}</span>
+                <span style="color:#888;font-size:11px">第 ${u.round || 1} 轮</span>
+                <span class="sl-time">${fmtTime(u.timestamp)}</span>
+              </div>
+              <div>使用了 <b style="color:#bb8fce">${u.skillIcon} ${esc(u.skillName)}</b> → 目标：<span class="sl-target">${esc(u.targetNames.join('、'))}</span></div>
+              ${u.revealResult ? `
+                <div class="sl-result">
+                  🔍 查验结果：${u.revealResult.map(t => `<b>${esc(t.name)}</b> 是 <b>${esc(t.roleName)}</b>`).join('，')}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderPlayerGrid(players, showSkill){
+  let html = '<div class="card"><h2>场上玩家</h2><div class="player-grid">';
+  if(players.length === 0){
+    html += `<div style="grid-column:1/-1;text-align:center;color:#666;padding:16px;font-size:13px">暂无玩家</div>`;
+  }
+  players.forEach(p => {
+    const isMe = p.id === myId;
+    const rd = p.role ? ROLE_DEFS[p.role] : null;
+    const visible = isMe || isHost;
+    const cls = 'player-card' + (p.alive ? '' : ' dead') + (isMe ? ' me' : '') + (isHost ? ' tappable' : '');
+    let badge = '';
+    if(showSkill && isHost && p.role && ROLE_DEFS[p.role] && ROLE_DEFS[p.role].skill){
+      if(p.role === 'witch'){
+        const a = p.witchAntidoteUsed ? '解✓' : '解';
+        const b = p.witchPoisonUsed ? '毒✓' : '毒';
+        badge = `<div class="skill-used-badge">${a} ${b}</div>`;
+      } else if(p.role === 'hunter'){
+        if(p.hunterCanShoot) badge = `<div class="skill-used-badge" style="background:rgba(230,126,34,.3);color:#e67e22">可开枪</div>`;
+        else if(p.skillUsedThisRound) badge = `<div class="skill-used-badge">已开枪</div>`;
+      } else if(p.skillUsedThisRound){
+        badge = `<div class="skill-used-badge">技能已用</div>`;
+      }
+    }
+    html += `
+      <div class="${cls}" ${isHost ? `data-playerid="${esc(p.id)}"` : ''}>
+        ${badge}
+        <div class="p-avatar">${p.alive ? '👤' : '💀'}</div>
+        <div class="p-name">${esc(p.name)}${isMe ? '(你)' : ''}</div>
+        <div class="p-role ${visible && rd ? rd.group : ''}">
+          ${visible && rd ? rd.icon + ' ' + rd.name : (p.role ? '已抽身份' : '未抽')}
+        </div>
+        ${!p.alive ? '<div class="dead-badge">☠️ 出局</div>' : ''}
+      </div>
+    `;
+  });
+  html += '</div></div>';
+  return html;
+}
+
+/* ============ 事件绑定 ============ */
+function bindRoomEvents(){
+  const r = room;
+
+  // 玩家卡片点击
+  document.querySelectorAll('.player-card.tappable').forEach(el => {
+    el.addEventListener('click', () => {
+      const pid = el.getAttribute('data-playerid');
+      if(pid) onPlayerCardClick(pid);
+    });
+  });
+
+  // 查看身份详情
+  document.querySelectorAll('[data-info]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showRoleDetail(el.getAttribute('data-info'));
+    });
+  });
+
+  // 我的身份卡
+  const myRoleCard = document.getElementById('myRoleDisplay');
+  if(myRoleCard && r.players[myId] && r.players[myId].role){
+    myRoleCard.addEventListener('click', () => showRoleDetail(r.players[myId].role));
+  }
+
+  // 通用技能按钮
+  const btnUseSkill = document.getElementById('btnUseSkill');
+  if(btnUseSkill && !btnUseSkill.disabled){
+    btnUseSkill.addEventListener('click', () => openSkillTargetModal());
+  }
+
+  // 女巫技能按钮
+  const btnUseAntidote = document.getElementById('btnUseAntidote');
+  if(btnUseAntidote && !btnUseAntidote.disabled){
+    btnUseAntidote.addEventListener('click', () => openSkillTargetModal('antidote', true));
+  }
+  const btnUsePoison = document.getElementById('btnUsePoison');
+  if(btnUsePoison && !btnUsePoison.disabled){
+    btnUsePoison.addEventListener('click', () => openSkillTargetModal('poison', true));
+  }
+
+  // 猎人开枪按钮
+  const btnHunterShoot = document.getElementById('btnHunterShoot');
+  if(btnHunterShoot){
+    btnHunterShoot.addEventListener('click', () => openSkillTargetModal('default', false));
+  }
+
+  // 等待阶段：人数
+  const sel = document.getElementById('maxPlayers');
+  if(sel) sel.addEventListener('change', e => hostSetMaxPlayers(e.target.value));
+  const wolfSel = document.getElementById('wolfCount');
+  if(wolfSel) wolfSel.addEventListener('change', e => hostSetWolfCount(e.target.value));
+
+  // 身份启用/禁用
+  document.querySelectorAll('[data-toggle]').forEach(el => {
+    el.addEventListener('click', () => {
+      hostToggleRole(el.getAttribute('data-toggle'));
+    });
+    el.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      showRoleDetail(el.getAttribute('data-toggle'));
+    });
+  });
+
+  // 阶段按钮
+  const btnStart = document.getElementById('btnStartGame');
+  if(btnStart) btnStart.addEventListener('click', hostStartGame);
+  const btnStartNight = document.getElementById('btnStartNight');
+  if(btnStartNight) btnStartNight.addEventListener('click', hostStartNight);
+  const btnStartDay = document.getElementById('btnStartDay');
+  if(btnStartDay) btnStartDay.addEventListener('click', hostStartDay);
+  const btnSV = document.getElementById('btnStartVoting');
+  if(btnSV) btnSV.addEventListener('click', hostStartVoting);
+  const btnER = document.getElementById('btnEndRound');
+  if(btnER) btnER.addEventListener('click', hostEndRound);
+  const btnRV = document.getElementById('btnRevealVotes');
+  if(btnRV) btnRV.addEventListener('click', hostRevealVotes);
+  const btnRS = document.getElementById('btnRestart');
+  if(btnRS) btnRS.addEventListener('click', hostRestart);
+  const btnVote = document.getElementById('btnVote');
+  if(btnVote) btnVote.addEventListener('click', openVoteModal);
+  const btnLeave = document.getElementById('btnLeave');
+  if(btnLeave) btnLeave.addEventListener('click', leaveRoom);
+
+  // 分享按钮
+  const btnCopyCode = document.getElementById('btnCopyCode');
+  if(btnCopyCode) btnCopyCode.addEventListener('click', () => copyText(r.code, '房间码已复制'));
+  const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+  if(roomCodeDisplay) roomCodeDisplay.addEventListener('click', () => copyText(r.code, '房间码已复制'));
+  const btnCopyLink = document.getElementById('btnCopyLink');
+  if(btnCopyLink) btnCopyLink.addEventListener('click', () => {
+    const url = location.origin + location.pathname + '?room=' + r.code;
+    copyText(url, '游戏链接已复制');
+  });
+  const btnShare = document.getElementById('btnShare');
+  if(btnShare) btnShare.addEventListener('click', shareGameLink);
+
+  // 二维码
+  if(r.phase === 'waiting' && isHost){
+    setTimeout(() => {
+      const el = document.getElementById('qrcode');
+      if(!el) return;
+      el.innerHTML = '';
+      try{
+        if(typeof QRCode !== 'undefined'){
+          const url = location.origin + location.pathname + '?room=' + r.code;
+          new QRCode(el, {
+            text: url, width: 180, height: 180,
+            colorDark: '#000000', colorLight: '#ffffff',
+            correctLevel: (QRCode.CorrectLevel && QRCode.CorrectLevel.H) || 2
+          });
+        } else {
+          el.innerHTML = '<div style="color:#666;font-size:12px;padding:10px">二维码组件未加载</div>';
+        }
+      }catch(e){
+        el.innerHTML = '<div style="color:#666;font-size:12px;padding:10px">二维码生成失败</div>';
+      }
+    }, 60);
+  }
+}
+
+/* ============ 主渲染 ============ */
+function render(){
+  const app = document.getElementById('app');
+  if(!app) return;
+  updateBodyTheme();
+  if(screen === 'home') renderHome(app);
+  else if(screen === 'room') renderRoom(app);
+}
+
+/* ============ 初始化 ============ */
+window.addEventListener('DOMContentLoaded', () => {
+  if(typeof Peer === 'undefined'){
+    setTimeout(() => {
+      if(typeof Peer === 'undefined') toast('网络组件加载失败，请刷新页面', 5000);
+    }, 2000);
+  }
+  window.addEventListener('beforeunload', () => {
+    if(isHost) saveHostRoom();
+    if(peer){ try{ peer.destroy(); }catch(e){} }
+  });
+  render();
+});
+
+window.showRoleDetail = showRoleDetail;
+window.leaveRoom = leaveRoom;
+</script>
+</body>
+</html>
